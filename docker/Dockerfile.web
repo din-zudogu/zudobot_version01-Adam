@@ -1,0 +1,26 @@
+# Zudobot apps/web — multi-stage sandbox image (scaffold; Next.js not started by default)
+FROM node:18-alpine AS base
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+FROM base AS dependencies
+COPY package.json package-lock.json* ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/widget/package.json ./packages/widget/
+RUN npm ci
+
+FROM base AS src-extractor
+COPY . .
+RUN rm -rf docker/env/generated/* 2>/dev/null || true
+
+FROM base AS runner
+WORKDIR /app
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=src-extractor /app ./
+
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+ENV NODE_ENV=production
+
+CMD ["node", "docker/scripts/container-scaffold.mjs"]

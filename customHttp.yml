@@ -1,0 +1,25 @@
+# AWS Amplify Hosting — custom HTTP headers (monorepo: apps/web)
+# https://docs.aws.amazon.com/amplify/latest/userguide/monorepo-custom-headers.html
+applications:
+  - appRoot: apps/web
+    customHeaders:
+      - pattern: '/widget.js'
+        headers:
+          - key: 'Access-Control-Allow-Origin'
+            value: '*'
+          - key: 'Access-Control-Allow-Methods'
+            value: 'GET, HEAD, OPTIONS'
+          - key: 'Access-Control-Allow-Headers'
+            value: 'Content-Type, Authorization, X-Requested-With'
+          - key: 'Cache-Control'
+            value: 'public, max-age=31536000, immutable'
+      - pattern: '/zudobot-loader.js'
+        headers:
+          - key: 'Access-Control-Allow-Origin'
+            value: '*'
+          - key: 'Access-Control-Allow-Methods'
+            value: 'GET, HEAD, OPTIONS'
+          - key: 'Access-Control-Allow-Headers'
+            value: 'Content-Type, Authorization, X-Requested-With'
+          - key: 'Cache-Control'
+            value: 'public, max-age=31536000, immutable'

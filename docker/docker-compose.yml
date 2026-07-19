@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  zudobot-db:
+    image: mongo:6.0
+    container_name: zudobot-sandbox-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - zudobot_mongo_data:/data/db
+      - ./mongodb/init:/docker-entrypoint-initdb.d
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: localsecretpassword
+    networks:
+      - zudobot-network
+
+  mongo-express:
+    image: mongo-express
+    container_name: zudobot-mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: localsecretpassword
+      ME_CONFIG_MONGODB_URL: mongodb://root:localsecretpassword@zudobot-db:27017/?authSource=admin
+    depends_on:
+      - zudobot-db
+    networks:
+      - zudobot-network
+
+  web-scaffold:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    container_name: zudobot-web-scaffold
+    ports:
+      - "3000:3000"
+    environment:
+      RUN_MODE: scaffold
+      MONGO_URI: mongodb://root:localsecretpassword@zudobot-db:27017/zudobot?authSource=admin
+    env_file:
+      - ./env/local.env
+    depends_on:
+      - zudobot-db
+    networks:
+      - zudobot-network
+    command: ["node", "docker/scripts/container-scaffold.mjs"]
+
+volumes:
+  zudobot_mongo_data:
+
+networks:
+  zudobot-network:
+    driver: bridge

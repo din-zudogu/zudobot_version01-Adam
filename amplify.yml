@@ -1,0 +1,66 @@
+version: 1
+applications:
+  - appRoot: apps/web
+    frontend:
+      buildPath: / # install/build from monorepo root — needs sibling packages/widget
+      phases:
+        preBuild:
+          commands:
+            - export NODE_OPTIONS="--max-old-space-size=4096"
+            - |
+              for v in MONGO_URI AUTH_SECRET AUTH_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
+                if [ -z "${!v}" ]; then echo "[env-check] MISSING: $v"; else echo "[env-check] OK: $v"; fi
+              done
+            - |
+              if [ -z "$GEMINI_API_KEY" ] && [ -z "$GEMINI_API_KEY_LIVE" ]; then
+                echo "[env-check] MISSING: GEMINI_API_KEY (or GEMINI_API_KEY_LIVE)"
+              else
+                echo "[env-check] OK: GEMINI_API_KEY or GEMINI_API_KEY_LIVE"
+              fi
+            - npm ci --cache .npm --prefer-offline --ignore-scripts
+            - npm run build:widget
+        build:
+          commands:
+            - export NODE_OPTIONS="--max-old-space-size=4096"
+            - |
+              # Amplify Hosting Compute only exposes Console env vars at build time,
+              # not to the deployed Lambda's runtime process.env. Writing them into
+              # .env.production makes Next.js load them at runtime too (official AWS
+              # workaround: https://docs.aws.amazon.com/amplify/latest/userguide/ssr-environment-variables.html).
+              # Keep this list in sync with apps/web/lib/env/amplifyGuardrail.ts and
+              # any new server-side process.env.X reads added elsewhere in apps/web.
+              for v in MONGO_URI MONGO_URI_DIRECT AUTH_SECRET AUTH_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET \
+                       GEMINI_API_KEY GEMINI_API_KEY_LIVE INTERNAL_CRON_SECRET WEBHOOK_SECRET \
+                       MAIL_PROVIDER MAIL_API_KEY MAIL_FROM \
+                       STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET STRIPE_CONNECT_CLIENT_ID RESEND_API_KEY EMAIL_FROM \
+                       PII_ENCRYPTION_KEY FACEBOOK_APP_ID FACEBOOK_APP_SECRET UPSTASH_REDIS_REST_URL UPSTASH_REDIS_REST_TOKEN \
+                       COST_DATA_UNLOCK_SECRET PLATFORM_GLOBAL_EMBED_KEY PLATFORM_BOT_EMBED_KEY ADMIN_TOTP_SECRET \
+                       PLATFORM_GLOBAL_CHAT_TENANT_ID ZUDO_GUIDE_EMBED_KEY GOOGLE_EXTENSION_OAUTH_CLIENT_ID CLIENT_ID \
+                       COMPANY_TAX_ID MONGO_DNS_SERVERS WIDGET_SCRIPT_INTEGRITY DATABASE_URL DIRECT_URL; do
+                if [ -n "${!v}" ]; then echo "$v=${!v}" >> apps/web/.env.production; fi
+              done
+            - env | grep -e '^NEXT_PUBLIC_' >> apps/web/.env.production || true
+            - npm run build --workspace=apps/web
+            - |
+              # Next.js `output: standalone` doesn't copy .env files into the
+              # standalone bundle automatically — copy it in ourselves so the
+              # deployed Lambda's server.js can actually load it at runtime.
+              # Try both possible layouts since the exact structure depends on
+              # how Amplify's monorepo bundler lays out the standalone output.
+              cp apps/web/.env.production apps/web/.next/standalone/apps/web/.env.production 2>/dev/null
+              cp apps/web/.env.production apps/web/.next/standalone/.env.production 2>/dev/null
+              find apps/web/.next/standalone -maxdepth 3 -name "server.js" -exec dirname {} \; | while read d; do
+                cp apps/web/.env.production "$d/.env.production" 2>/dev/null
+              done
+              true
+      artifacts:
+        baseDirectory: apps/web/.next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .npm/**/*
+          - node_modules/**/*
+          - apps/web/node_modules/**/*
+          - apps/api/node_modules/**/*
+          - packages/widget/node_modules/**/*

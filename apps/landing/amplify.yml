@@ -1,0 +1,13 @@
+version: 1
+frontend:
+  phases:
+    build:
+      commands:
+        - mkdir -p js
+        - printf "window.ZUDOBOT_CONFIG={geminiKey:'%s'};" "$GEMINI_API_KEY_LIVE" > js/config.js
+  artifacts:
+    baseDirectory: .
+    files:
+      - "**/*"
+  cache:
+    paths: []

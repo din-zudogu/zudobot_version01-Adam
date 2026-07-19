@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+**/.next
+**/dist
+.git
+.env
+.env.*
+!.env.example
+docker/env/local.env
+docker/env/generated
+*.md
+integrations
+scripts/compass-insert-mock-tenantprofile.json

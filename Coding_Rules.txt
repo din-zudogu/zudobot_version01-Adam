@@ -1,0 +1,10 @@
+# Zudobot SaaS — Coding Rules
+
+### 🔒 [กฎเหล็กระดับวิกฤต] มาตรฐานการควบคุมสภาพแวดล้อมและความลับ (AWS Amplify Environment Variables Hard Guardrail)
+1. **AWS Amplify Variables Only**: ทุกค่าคอนฟิกูเรชัน (Configurations), API Keys, Tokens, URIs, และข้อมูลความลับทั้งหมดที่แอปพลิเคชันต้องใช้ในการประมวลผล **ต้องถูกเรียกผ่าน Native `process.env` ของ Node.js ที่ส่งตรงมาจากสล็อต Environment Variables บน AWS Amplify Console เท่านั้น!**
+2. **Absolute File Banned**: ห้ามคอมไพล์ ห้ามเรียกใช้ หรือติดตั้งแพ็กเกจโหลดไฟล์โลคอล เช่น `dotenv` หรือไลบรารีอ่านไฟล์ `.env`, `.env.local`, `.env.production` บนดิสก์อย่างเด็ดขาด ระบบห้ามพึ่งพาไฟล์จำลองสภาพแวดล้อมใดๆ ใน Directory ของแอป (`apps/web`, `apps/api`, `apps/dashboard`)
+3. **No Fallback / Anti-Mocker**: ห้ามเขียนโค้ดประเภทให้ค่า Default หรือสตริงเปล่าสำรอง (เช่น `process.env.MONGO_URI || 'mongodb://...'`) หากค่าตัวแปรจาก AWS Amplify ไม่มีอยู่จริงหรือเป็นค่าว่าง ระบบต้องตัดการทำงานทันที (Runtime Crash) พร้อมโยน Error Message ที่ชัดเจนระบุตัวแปรที่ขาดหายไป ห้ามปล่อยผ่านเด็ดขาดเพื่อป้องกันช่องโหว่ความปลอดภัยด้านข้อมูลรั่วไหล
+
+**ข้อยกเว้น (เฉพาะสคริปต์ CLI นอกแอป):** `scripts/*.mjs` ใช้ `scripts/lib/loadAmplifyEnv.mjs` หรือ `.env.aws.local` (bootstrap IAM เท่านั้น) — ห้าม commit ความลับ
+
+**การ implement ใน repo:** `apps/web/lib/env/amplifyGuardrail.ts` + `apps/web/instrumentation.ts`

@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Zudobot Installer",
+  "version": "3.1.0",
+  "description": "ช่วยฝังสคริปต์ Zudobot เข้ากับเว็บไซต์ของคุณอย่างปลอดภัยโดยไม่ต้องแตะโค้ด",
+  "permissions": [
+    "identity",
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://zudobot.zudogu.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://zudobot.zudogu.com/*",
+      "https://*.zudogu.com/*"
+    ]
+  },
+  "oauth2": {
+    "client_id": "919810412495-eji3oirt20llomt2ge2bgekpqi8lu1ei.apps.googleusercontent.com",
+    "scopes": [
+      "openid",
+      "email",
+      "profile"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Zudobot Installer"
+  }
+}

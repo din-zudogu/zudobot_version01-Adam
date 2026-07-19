@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+# Zudobot apps/api — clone scaffold
+
+FROM node:20-bookworm-slim AS base
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+FROM base AS deps
+COPY package.json package-lock.json ./
+COPY apps/api/package.json ./apps/api/
+RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
+
+FROM base AS runner
+ENV NODE_ENV=production
+ENV PORT=3000
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY apps/api ./apps/api
+COPY docker ./docker
+EXPOSE 3000
+CMD ["node", "docker/scripts/container-scaffold.mjs", "api"]

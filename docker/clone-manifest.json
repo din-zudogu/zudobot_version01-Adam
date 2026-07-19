@@ -1,0 +1,112 @@
+{
+  "$schema": "./clone-manifest.schema.json",
+  "version": "1.0.0",
+  "description": "Canonical inventory for 100% clone of Zudobot SaaS — AWS Amplify env + MongoDB. Values are never stored in git.",
+  "amplify": {
+    "appId": "d119trnyk61q8r",
+    "legacyAppId": "d9czp7mb1m4w2",
+    "defaultBranch": "master",
+    "region": "ap-southeast-1",
+    "appRootWeb": "apps/web",
+    "appRootApi": "apps/api",
+    "buildSpec": "amplify.yml"
+  },
+  "mongodb": {
+    "atlasAppName": "zudobot-saas",
+    "collectionsNote": "Use mongodump from source cluster; mongorestore into target. See scripts/clone/clone-mongodb.mjs",
+    "envKeys": ["MONGO_URI", "MONGO_URI_DIRECT", "MONGO_DB_NAME"]
+  },
+  "environmentVariableGroups": [
+    {
+      "id": "required_guardrail",
+      "description": "apps/web/lib/env/amplifyGuardrail.ts — app aborts if missing",
+      "keys": [
+        "MONGO_URI",
+        "AUTH_SECRET",
+        "AUTH_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET"
+      ],
+      "oneOf": [["GEMINI_API_KEY", "GEMINI_API_KEY_LIVE"]]
+    },
+    {
+      "id": "amplify_web_prebuild",
+      "description": "Copied to apps/web/.env.production at Amplify build (amplify.yml apps/web)",
+      "keys": [
+        "AUTH_TRUST_HOST",
+        "MONGO_URI",
+        "MONGO_URI_DIRECT",
+        "AUTH_URL",
+        "AUTH_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_EXTENSION_OAUTH_CLIENT_ID",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+        "STRIPE_PUBLISHABLE_KEY",
+        "GEMINI_API_KEY",
+        "GEMINI_API_KEY_LIVE",
+        "GEMINI_CHAT_MODEL",
+        "GEMINI_EMBED_MODEL",
+        "ENABLE_GEMINI_GOOGLE_SEARCH",
+        "RESEND_API_KEY",
+        "EMAIL_FROM",
+        "NEXT_PUBLIC_WIDGET_CDN_URL",
+        "NEXT_PUBLIC_WIDGET_VERSION",
+        "NEXT_PUBLIC_WIDGET_SCRIPT_INTEGRITY",
+        "NEXT_PUBLIC_ZUDOBOT_GLOBAL_WIDGET_SCRIPT_INTEGRITY",
+        "WIDGET_SCRIPT_INTEGRITY",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_URL",
+        "NEXT_PUBLIC_PLATFORM_DOMAIN",
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_ZUDOBOT_SITE_EMBED_KEY",
+        "NEXT_PUBLIC_ZUDOBOT_SITE_WIDGET_POSITION",
+        "NEXT_PUBLIC_ZUDOBOT_SITE_WIDGET_COLOR",
+        "NEXT_PUBLIC_CHROME_EXTENSION_ID",
+        "NEXT_PUBLIC_CHROME_WEB_STORE_URL",
+        "PLATFORM_GLOBAL_EMBED_KEY",
+        "PLATFORM_BOT_EMBED_KEY",
+        "PLATFORM_GLOBAL_CHAT_TENANT_ID",
+        "ADMIN_TOTP_SECRET",
+        "ZUDOBOT_MASTER_SECRET",
+        "INTERNAL_CRON_SECRET",
+        "COMPANY_TAX_ID",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "ZUDO_GUIDE_EMBED_KEY",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      ]
+    },
+    {
+      "id": "amplify_api_prebuild",
+      "description": "amplify.yml apps/api",
+      "keys": [
+        "MONGO_URI",
+        "GEMINI_API_KEY",
+        "GEMINI_CHAT_MODEL",
+        "GEMINI_CLASSIFY_MODEL",
+        "ZUDOBOT_MASTER_SECRET",
+        "ALLOWED_ORIGINS"
+      ]
+    },
+    {
+      "id": "web_app_extras",
+      "description": "apps/web/.env.example — local/docker only (not all in amplify grep)",
+      "keys": [
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET",
+        "PII_ENCRYPTION_KEY",
+        "NEXT_PUBLIC_ZUDOBOT_WIDGET_EMBED_KEY",
+        "NEXT_PUBLIC_PLATFORM_KB_CORE_URLS",
+        "MONGO_DB_NAME",
+        "MONGO_DNS_SERVERS",
+        "SANDBOX_IP_LIMIT_PER_HOUR",
+        "SANDBOX_SESSION_LIMIT",
+        "NODE_ENV"
+      ]
+    }
+  ]
+}

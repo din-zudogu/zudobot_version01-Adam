@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<title>Zudobot Technical Specification Document</title>
+<style>
+body{font-family:'Segoe UI',Arial,sans-serif;line-height:1.45;max-width:1100px;margin:0 auto;padding:24px 28px 56px;color:#111827}h1,h2,h3{color:#0f172a}table{border-collapse:collapse;width:100%;font-size:12px;margin:10px 0 16px}th,td{border:1px solid #d1d5db;padding:6px 8px;vertical-align:top}th{background:#f3f4f6}code,pre{background:#f3f4f6;padding:2px 4px;border-radius:4px}pre{padding:12px;overflow:auto}hr{margin:24px 0;border:none;border-top:1px solid #e5e7eb}ul{padding-left:20px}
+</style>
+</head>
+<body>
+<h1>Technical Specification Document</h1>
+<h2>Zudobot — AI Chatbot SaaS Platform</h2>
+<table><tr><th>Field</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Document name</td><td>Zudobot Technical Specification Document</td></tr><tr><td>File</td><td><code>docs/TSD-Zudobot-20260705-v2.0.md</code></td></tr><tr><td>Version</td><td><strong>v2.0</strong></td></tr><tr><td>Date</td><td>2026-07-05</td></tr><tr><td>Status</td><td>Production-aligned — full technical specification</td></tr><tr><td>Owner</td><td>Zudogu Engineering</td></tr><tr><td>Audience</td><td>Software Engineers, DevOps, System Architects, QA, Product</td></tr><tr><td>Source baseline</td><td>Git <code>master</code> branch — 2026-07-05</td></tr><tr><td>Supersedes</td><td><code>TSD-Zudobot-20260705-v1.2.md</code>, <code>TSD-Zudobot-20260622-v1.0.pdf</code></td></tr></table>
+<hr />
+<h2>Table of Contents</h2>
+<table><tr><th>#</th><th>Section</th></tr><tr><td>---</td><td>---------</td></tr><tr><td>1</td><td>Purpose and Scope</td></tr><tr><td>2</td><td>Technology and Environment Specification</td></tr><tr><td>3</td><td>Overview Architecture</td></tr><tr><td>4</td><td>Infrastructure Overview Flow</td></tr><tr><td>5</td><td>Data Diagram</td></tr><tr><td>6</td><td>System Flow by Process</td></tr><tr><td>7</td><td>Business Flow by Process</td></tr><tr><td>8</td><td>Entity Relationship Diagram (ERD)</td></tr><tr><td>9</td><td>Data Dictionary</td></tr><tr><td>10</td><td>API Flow by Process</td></tr><tr><td>11</td><td>API Specification</td></tr><tr><td>12</td><td>Source Code Specification</td></tr><tr><td>13</td><td>Error Handling Strategy</td></tr><tr><td>14</td><td>Error Message Mapping</td></tr><tr><td>15</td><td>Warning Message Mapping</td></tr><tr><td>16</td><td>Function / Feature / Middleware / Command Mapping</td></tr><tr><td>17</td><td>Security and Operational Notes</td></tr><tr><td>18</td><td>Role and Permission Matrix</td></tr><tr><td>19</td><td>Business Rules and Constraints</td></tr><tr><td>20</td><td>Appendix — Deployment Checklist</td></tr><tr><td>21</td><td>Document Version History</td></tr></table>
+<hr />
+<h2>1. Purpose and Scope</h2>
+<p>เอกสารฉบับนี้เป็น <strong>Technical Specification Document (TSD) v2.0</strong> ที่รวมข้อมูลทางเทคนิคทั้งหมดของแพลตฟอร์ม Zudobot โดยอ้างอิงจาก source code ล่าสุดและเทียบกับเอกสารฐาน <code>TSD-Zudobot-20260622-v1.0</code> ครอบคลุม:</p>
+<ul><li>Overview architecture และ infrastructure flow</li><li>Data diagram, ER diagram, data dictionary</li><li>System flow และ business flow แยกตาม process</li><li>API flow, API registry (189 endpoints), API specification</li><li>Source code structure และ service catalog</li><li>Error handling, error/warning message mapping</li><li>Function, feature, middleware, command mapping</li><li>Cloud server, database, framework, AI spec, ภาษาและเทคโนโลยี</li></ul>
+<hr />
+<h2>2. Technology and Environment Specification</h2>
+<h3>2.1 Platform and Cloud Server</h3>
+<table><tr><th>Component</th><th>Specification</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Cloud platform</td><td><strong>AWS Amplify</strong></td></tr><tr><td>Region</td><td><strong>ap-southeast-2</strong> (Sydney)</td></tr><tr><td>Deployment model</td><td>Monorepo multi-app (web, api, dashboard, landing, widget)</td></tr><tr><td>Runtime</td><td>Node.js 20+ / Next.js 14 SSR + API Route Handlers</td></tr><tr><td>CDN</td><td>AWS CloudFront (via Amplify)</td></tr><tr><td>Scheduled jobs</td><td>AWS EventBridge → Lambda <code>zudobot-cron-dispatcher</code></td></tr><tr><td>Environment config</td><td>AWS Amplify Console → <code>process.env</code> only (no <code>.env</code> runtime)</td></tr><tr><td>Security gate</td><td><code>scripts/security-gate.mjs</code> at Amplify preBuild</td></tr></table>
+<p><strong>Amplify Apps (Production)</strong></p>
+<table><tr><th>App</th><th>Port</th><th>Domain (typical)</th><th>App ID</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td><code>apps/web</code></td><td>3000</td><td>zudobot.zudogu.com</td><td>d9czp7mb1m4w2</td></tr><tr><td><code>apps/api</code></td><td>4000</td><td>api.zudobot.zudogu.com</td><td>separate Amplify app</td></tr><tr><td><code>apps/dashboard</code></td><td>4001</td><td>dashboard.zudogu.com</td><td>separate Amplify app</td></tr><tr><td><code>apps/landing</code></td><td>static</td><td>zudogu.com</td><td>separate Amplify app</td></tr><tr><td><code>packages/widget</code></td><td>—</td><td>embedded via <code>apps/web/public/</code></td><td>build artifact</td></tr></table>
+<h3>2.2 Database</h3>
+<table><tr><th>Item</th><th>Specification</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Engine</td><td><strong>MongoDB Atlas</strong> (SRV cluster)</td></tr><tr><td>Database name</td><td><code>zudobot_saas</code></td></tr><tr><td>ORM</td><td>Mongoose 8.23.1</td></tr><tr><td>Collections</td><td>43 Mongoose models (see §9)</td></tr><tr><td>Tenant isolation</td><td>All queries filtered by <code>tenantId</code> (string or ObjectId)</td></tr><tr><td>ChatSession note</td><td>Uses <code>tenantId: ObjectId</code> — query with <code>tenantOrOidQ</code> pattern</td></tr><tr><td>Backup</td><td><code>ZudobotGlobalBackup</code> — zero-deletion chat lifecycle</td></tr></table>
+<h3>2.3 Framework, Languages, and Libraries</h3>
+<table><tr><th>Layer</th><th>Technology</th><th>Version</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>Language</td><td>TypeScript</td><td>5.x</td></tr><tr><td>Frontend framework</td><td>Next.js</td><td>14.2.35</td></tr><tr><td>UI library</td><td>React</td><td>18.x</td></tr><tr><td>Styling</td><td>Tailwind CSS</td><td>3.4.1</td></tr><tr><td>UI components</td><td>Radix UI, Lucide</td><td>latest</td></tr><tr><td>Backend</td><td>Next.js App Router Route Handlers</td><td>14.2.35</td></tr><tr><td>Auth</td><td>NextAuth v5 beta (JWT, Google OAuth only)</td><td>5.0.0-beta.31</td></tr><tr><td>Validation</td><td>Zod</td><td>4.4.3</td></tr><tr><td>Widget build</td><td>Vite IIFE bundle</td><td>5.2.0</td></tr><tr><td>Payment</td><td>Stripe</td><td>22.1.0</td></tr><tr><td>Email</td><td>Resend</td><td>6.12.2</td></tr><tr><td>Rate limit / cache</td><td>Upstash Redis + Ratelimit</td><td>1.38.0 / 2.0.8</td></tr><tr><td>File parsing</td><td>pdf-parse, mammoth, cheerio, xlsx, docx</td><td>various</td></tr><tr><td>Package manager</td><td>npm workspaces</td><td>monorepo</td></tr></table>
+<h3>2.4 AI Specification</h3>
+<table><tr><th>Item</th><th>Specification</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Provider</td><td><strong>Google Gemini</strong> via <code>@google/generative-ai</code> 0.24.1</td></tr><tr><td>Embedding model</td><td><code>text-embedding-004</code> (configurable via <code>GEMINI_EMBED_MODEL</code>)</td></tr><tr><td>Chat models</td><td>Primary + fallback chain via <code>GEMINI_CHAT_MODEL</code>, <code>GEMINI_CHAT_MODEL_FALLBACK</code>, CJK variants</td></tr><tr><td>Extract model</td><td><code>GEMINI_EXTRACT_MODEL</code> (few-shot / order extraction)</td></tr><tr><td>Optional feature</td><td><code>ENABLE_GEMINI_GOOGLE_SEARCH</code> — grounded search</td></tr><tr><td>Provider abstraction</td><td><code>apps/web/lib/ai/providers/geminiProvider.ts</code></td></tr><tr><td>Self-critique</td><td>Optional reply refinement pass</td></tr><tr><td>Self-learning</td><td><code>FewShotExample</code> extraction via cron + admin trigger</td></tr><tr><td>RAG</td><td>Vector search on <code>KnowledgeChunk.embedding</code> + <code>RagEventLog</code> telemetry</td></tr><tr><td>Error normalization</td><td><code>apps/web/lib/ai/geminiErrors.ts</code> — user-safe Thai messages</td></tr><tr><td>History rules</td><td>Strict user/model alternation; history sanitized before Gemini call</td></tr></table>
+<h3>2.5 Plan Catalog (Business Constants)</h3>
+<table><tr><th>Plan</th><th>Price (THB/mo)</th><th>Messages</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>trial</td><td>0</td><td>250/day</td></tr><tr><td>starter</td><td>990</td><td>2,000/mo</td></tr><tr><td>pro</td><td>1,990</td><td>5,000/mo</td></tr><tr><td>master</td><td>14,990</td><td>20,000/mo</td></tr><tr><td>enterprise</td><td>custom</td><td>unlimited</td></tr></table>
+<p>Addons: quota, memory, retention — defined in <code>apps/web/lib/payment/pmRules.ts</code>.</p>
+<hr />
+<h2>3. Overview Architecture</h2>
+<pre>
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           CLIENT LAYER                                   │
+│  Customer Browser (Widget) │ Tenant Dashboard │ Admin │ Partner Portal  │
+│  LINE / Meta / TikTok Webhooks │ Chrome Extension │ WordPress Plugin    │
+└───────────────────────────────────┬─────────────────────────────────────┘
+                                    │
+                                    v
+┌─────────────────────────────────────────────────────────────────────────┐
+│              AWS AMPLIFY — ap-southeast-2 (Sydney)                       │
+│  ┌─────────────┐ ┌─────────────┐ ┌──────────────┐ ┌─────────────────┐ │
+│  │ apps/web    │ │ apps/api    │ │ apps/dashboard│ │ apps/landing   │ │
+│  │ 168 API     │ │ 21 API      │ │ analytics UI  │ │ static HTML    │ │
+│  │ routes      │ │ routes      │ │               │ │                │ │
+│  └──────┬──────┘ └──────┬──────┘ └───────┬───────┘ └────────────────┘ │
+│         │               │                │                               │
+│  packages/widget → apps/web/public/widget.js (SRI integrity at build)   │
+└─────────┼───────────────┼────────────────┼───────────────────────────────┘
+          │               │                │
+          v               v                v
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        EXTERNAL SERVICES                                 │
+│  MongoDB Atlas (zudobot_saas) │ Google Gemini │ Stripe + Connect        │
+│  LINE Messaging API │ Meta Graph │ TikTok │ Resend │ Upstash Redis       │
+│  Google OAuth 2.0 │ zuorder (order relay) │ Slip verification providers │
+└─────────────────────────────────────────────────────────────────────────┘
+</pre>
+<h3>3.1 Core Responsibilities</h3>
+<table><tr><th>Layer</th><th>Responsibility</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Presentation</td><td>Landing, admin UI, tenant dashboard, partner portal, blog</td></tr><tr><td>Authentication</td><td>Google OAuth, JWT, middleware route guards, 2FA TOTP</td></tr><tr><td>Business logic</td><td>Billing, widget runtime, knowledge RAG, order flow, omnichannel handoff</td></tr><tr><td>Data access</td><td>Mongoose models, MongoDB collections, tenant isolation</td></tr><tr><td>Integrations</td><td>Gemini AI, Stripe, webhooks, email, rate limiting, order relay</td></tr></table>
+<h3>3.2 Monorepo Structure</h3>
+<table><tr><th>Path</th><th>Purpose</th></tr><tr><td>---</td><td>---</td></tr><tr><td><code>apps/web</code></td><td>Primary app: UI + 168 API routes + auth + admin + tenant + partner</td></tr><tr><td><code>apps/api</code></td><td>Standalone chatbot API (port 4000, 21 routes under <code>/api/v1/</code>)</td></tr><tr><td><code>apps/dashboard</code></td><td>Standalone analytics dashboard (separate Amplify deploy)</td></tr><tr><td><code>apps/landing</code></td><td>Static landing HTML (separate Amplify deploy)</td></tr><tr><td><code>packages/widget</code></td><td>Vite-built embeddable widget JS</td></tr><tr><td><code>scripts/</code></td><td>Seed, migration, security gate, env helpers (may use <code>.env.aws.local</code>)</td></tr><tr><td><code>amplify/</code></td><td>EventBridge cron dispatcher Lambda</td></tr></table>
+<hr />
+<h2>4. Infrastructure Overview Flow</h2>
+<h3>4.1 Amplify Build Pipeline</h3>
+<pre>
+Git push (master)
+  → npm ci --include=dev
+  → node scripts/security-gate.mjs
+  → node scripts/inject-extension-config.mjs
+  → npm run build:widget
+  → cp widget.js + zudobot-loader.js → apps/web/public/
+  → printenv → .env.production (build-time dump from Amplify Console)
+  → next build (per app)
+  → Deploy to CloudFront/Amplify hosting
+</pre>
+<h3>4.2 Network Flow — Widget Chat Request</h3>
+<pre>
+Customer Browser
+  → CDN: load widget.js (SRI integrity check)
+  → POST /api/widget/init {key} + Origin header
+      → MongoDB: TenantProfile lookup by embedKey
+      → Validate domain whitelist + widgetEnabled
+      → Return bot config (200) or 403
+  → POST /api/widget/chat {key, sessionId, message}
+      → Rate limit (Upstash, fail-open)
+      → Quota gate (checkQuota)
+      → RAG: KnowledgeChunk vector search
+      → Gemini: generate reply (model fallback chain)
+      → Persist ConversationSession + ChatSession + usage
+      → Return {reply, products?, handoffMode?, blocked?}
+</pre>
+<h3>4.3 EventBridge Cron Dispatcher</h3>
+<table><tr><th>Cron</th><th>Schedule (UTC)</th><th>Endpoint</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>delete-tenant</td><td>daily 00:00</td><td><code>/api/cron/delete-tenant</code></td><td>Hard delete after soft-delete grace</td></tr><tr><td>partner-billing</td><td>28th 00:00</td><td><code>/api/cron/partner-billing</code></td><td>Partner consolidated invoices</td></tr><tr><td>global-chat-backup</td><td>daily 16:59</td><td><code>/api/cron/global-chat-backup</code></td><td>Backup global chat sessions</td></tr><tr><td>vip-sync</td><td>daily 01:00</td><td><code>/api/cron/vip-sync</code></td><td>Sync VipTenant → User.isVip</td></tr><tr><td>kb-auto-refresh</td><td>hourly</td><td><code>/api/cron/kb-auto-refresh</code></td><td>Auto-refresh knowledge sources</td></tr><tr><td>few-shot-extract</td><td>every 6h</td><td><code>/api/cron/few-shot-extract</code></td><td>Self-learning Q&amp;A extraction</td></tr><tr><td>order-relay</td><td>every 5min</td><td><code>/api/cron/order-relay</code></td><td>Retry zuorder order outbox</td></tr></table>
+<p>Auth: <code>INTERNAL_CRON_SECRET</code> header on all cron routes.</p>
+<hr />
+<h2>5. Data Diagram</h2>
+<h3>5.1 High-Level Data Exchange</h3>
+<pre>
+Authentication
+  Google OAuth → NextAuth JWT → User identity (deferred doc creation)
+  → onboarding/complete → User + TenantProfile persisted
+
+Widget Init
+  embedKey + origin → TenantProfile validation → widget config JSON
+
+Widget Chat
+  message + sessionId → quota + domain check → RAG + Gemini
+  → ConversationSession + usage increment → AI reply
+
+Knowledge Ingestion
+  upload/URL/custom text → KnowledgeJob → chunk + embed
+  → KnowledgeChunk + KnowledgeRefreshSchedule
+
+Billing
+  Stripe checkout → webhook → Subscription + Invoice → evaluateBotState
+
+Omnichannel
+  LINE/Meta/TikTok webhook → ChannelContextToken + Notification
+  → live-chat handoff queue
+
+Partner
+  invite/provision → PartnerProfile + PartnerClientData
+  → Stripe Connect + partner billing
+</pre>
+<h3>5.2 Data Exchange Summary Table</h3>
+<table><tr><th>Process</th><th>Input</th><th>Storage / Service</th><th>Output</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>Authentication</td><td>Google profile</td><td>User + JWT</td><td>Session + onboarding state</td></tr><tr><td>Widget init</td><td>embedKey + origin</td><td>TenantProfile</td><td>Widget config</td></tr><tr><td>Widget chat</td><td>message + sessionId</td><td>ConversationSession + Gemini + KnowledgeChunk</td><td>AI reply + products</td></tr><tr><td>Knowledge ingest</td><td>file / URL / text</td><td>KnowledgeJob + KnowledgeChunk</td><td>RAG-ready vectors</td></tr><tr><td>Billing</td><td>checkout / webhook</td><td>Subscription + Invoice</td><td>Plan status + botState</td></tr><tr><td>Omnichannel</td><td>webhook event</td><td>ChatSession + Notification</td><td>Inbox / handoff alert</td></tr><tr><td>Partner</td><td>invite / provision</td><td>PartnerProfile + Subscription</td><td>Partner-managed access</td></tr><tr><td>Order flow</td><td>chat intent</td><td>OrderDraft + OrderOutbox</td><td>zuorder relay</td></tr><tr><td>Self-learning</td><td>chat history</td><td>FewShotExample</td><td>Improved few-shot prompts</td></tr></table>
+<hr />
+<h2>6. System Flow by Process</h2>
+<h3>6.1 Authentication and Onboarding</h3>
+<pre>
+1. User → /login → Google OAuth
+2. NextAuth creates JWT with role, googleSub, pendingRegistration flag
+3. User doc NOT created at sign-in (deferred registration B+C path)
+4. Middleware routes:
+   - pending → /onboarding only
+   - tenant without onboardingComplete → /onboarding
+   - 2FA pending → /login/2fa
+   - soft-delete → /account-pending-delete
+5. POST /api/onboarding/complete → creates User + TenantProfile + Subscription(trial)
+6. JWT updated → dashboard access granted
+</pre>
+<h3>6.2 Widget Initialization</h3>
+<pre>
+1. Customer site loads &lt;script src="widget.js" integrity="..."&gt;
+2. Widget calls POST /api/widget/init {key}
+3. Server validates embedKey exists, widgetEnabled=true
+4. Server checks Origin/Referer against allowedDomain + allowedDomains
+5. Returns config: botName, welcomeMessage, widgetColor, position, requireConsent
+</pre>
+<h3>6.3 Widget Messaging (Main Chat)</h3>
+<pre>
+1. Customer sends message via widget
+2. POST /api/widget/chat
+3. Validate: rate limit → origin → embed key → domain → quota (checkQuota)
+4. Load/create ConversationSession (visitor memory, TTL by retention addon)
+5. Detect buying intent / handoff intent
+6. RAG: vector search KnowledgeChunk + product context
+7. Build Gemini prompt with few-shot examples + customer memory
+8. Gemini provider: model fallback chain + self-critique
+9. Server-side order draft extraction (never trust LLM pricing alone)
+10. Persist session, increment usage, log RagEvent
+11. Return reply (+ products, handoff flag, blocked if quota exhausted)
+</pre>
+<h3>6.4 Knowledge Management</h3>
+<pre>
+1. Tenant uploads file / provides URL / custom text
+2. POST /api/tenant/knowledge/upload | sync | custom
+3. Create KnowledgeJob (status: pending)
+4. Scrape (cheerio) → chunk (500 chars, 80 overlap) → embed (text-embedding-004)
+5. Store KnowledgeChunk with embedding vector
+6. POST /api/tenant/knowledge/process for batch embed
+7. KnowledgeRefreshSchedule for auto-refresh (cron kb-auto-refresh)
+8. POST /api/tenant/knowledge/reembed for forced re-embedding
+</pre>
+<h3>6.5 Billing and Subscription</h3>
+<pre>
+1. Tenant selects plan → POST /api/stripe/checkout
+2. Stripe checkout session created (Card / PromptPay)
+3. Customer pays on Stripe hosted page
+4. Stripe webhook → POST /api/stripe/webhook
+5. Update Subscription status, create/update Invoice
+6. evaluateBotState() recalculates User.botState
+7. Notification sent on quota/payment events
+</pre>
+<h3>6.6 Omnichannel and Webhook</h3>
+<pre>
+1. External platform sends webhook (LINE / Meta / TikTok)
+2. POST /api/webhooks/{platform}/[tenantId]
+3. Verify signature / token
+4. Resolve tenant + create/update ChatSession
+5. Trigger Notification for handoff
+6. Tenant responds via /api/tenant/live-chat/[sessionId]/reply
+</pre>
+<h3>6.7 Cron and Maintenance</h3>
+<pre>
+1. EventBridge triggers zudobot-cron-dispatcher Lambda
+2. Lambda POSTs to /api/cron/* with INTERNAL_CRON_SECRET
+3. Job executes (delete, backup, billing, vip-sync, kb-refresh, order-relay)
+4. Results logged to CloudWatch
+</pre>
+<h3>6.8 Account Deletion</h3>
+<pre>
+1. Tenant: POST /api/tenant/account/delete → sets pendingDeleteAt
+2. Grace period: recover via POST /api/tenant/account/recover
+3. Cron delete-tenant: cascade delete 18+ collections
+4. Admin: POST /api/admin/delete-account (super_admin, dry-run support)
+5. Protected: zudogu.official@gmail.com never deleted
+</pre>
+<hr />
+<h2>7. Business Flow by Process</h2>
+<h3>7.1 New Tenant Onboarding</h3>
+<p>1. Sign in with Google (no password auth)</p>
+<p>2. Complete onboarding wizard (business profile, bot personality)</p>
+<p>3. System creates User + TenantProfile + trial Subscription</p>
+<p>4. Tenant receives embed key and installation snippet</p>
+<p>5. Configure domain whitelist → enable widget</p>
+<p>6. Upload knowledge base → bot ready for customer chat</p>
+<h3>7.2 Customer Support and Sales</h3>
+<p>1. Customer opens widget on merchant website</p>
+<p>2. Bot answers FAQ from knowledge base (RAG)</p>
+<p>3. Bot recommends products with server-validated pricing</p>
+<p>4. Buying intent → OrderDraft created server-side</p>
+<p>5. Checkout handoff → Stripe payment link or zuorder relay</p>
+<p>6. Human handoff → live-chat queue with LINE/Meta/TikTok bridge</p>
+<h3>7.3 Knowledge Expansion</h3>
+<p>1. Tenant adds URLs, files, or custom text</p>
+<p>2. System scrapes, chunks, embeds automatically</p>
+<p>3. Refresh schedule keeps content current</p>
+<p>4. Admin monitors RAG events via <code>/api/admin/rag-events</code></p>
+<h3>7.4 Partner Provisioning</h3>
+<p>1. Partner joins via invite or public <code>/partner/join</code></p>
+<p>2. KYC via PartnerLegalProfile (AES-256 encrypted fields)</p>
+<p>3. Stripe Connect onboarding for payouts</p>
+<p>4. Partner provisions clients, buys packages on their behalf</p>
+<p>5. Impersonation for support (JWT <code>impersonating: true</code>)</p>
+<p>6. Monthly partner billing via cron partner-billing</p>
+<h3>7.5 VIP and Custom Pricing</h3>
+<p>1. Admin creates VipTenant override (custom quota, duration, pricing)</p>
+<p>2. vip-sync cron syncs to User.isVip</p>
+<p>3. ReadyPackage and CostPriceScenario drive retail/partner pricing</p>
+<p>4. checkout/validate pre-flight before Stripe session</p>
+<hr />
+<h2>8. Entity Relationship Diagram (ERD)</h2>
+<h3>8.1 Core Domain</h3>
+<pre>
+User 1──1 TenantProfile        (tenantId = User._id.toString())
+User 1──0..1 Subscription      (userId)
+User 1──0..1 PartnerProfile    (userId)
+User 1──* Notification
+User 1──0..1 KycSubmission
+
+TenantProfile 1──* ConversationSession
+TenantProfile 1──* KnowledgeChunk
+TenantProfile 1──* KnowledgeJob
+TenantProfile 1──* Product
+TenantProfile 1──* OrderDraft
+TenantProfile 1──* ChannelContextToken
+TenantProfile 1──* ChatSession
+TenantProfile 1──0..1 VipTenant
+TenantProfile 1──0..1 StorePaymentConfig
+</pre>
+<h3>8.2 Chat and Knowledge</h3>
+<pre>
+KnowledgeJob 1──* KnowledgeChunk   (tenantId + sourceUrl)
+TenantProfile 1──* FewShotExample
+TenantProfile 1──* CustomerMemory   (hashed email, consent-gated)
+TenantProfile 1──* RagEventLog      (TTL 30 days)
+TenantProfile 1──* ConsentRecord    (PDPA audit)
+</pre>
+<h3>8.3 Billing and Pricing</h3>
+<pre>
+Subscription *──1 MasterPlanConfig   (plan_code)
+Subscription 1──* Invoice
+ReadyPackage *──* CostPriceScenario  (scenarioIds)
+CostPriceScenario *──1 PricingRateMaster (ratesUsedVersion)
+PackageConfig — admin overrides of plan catalog
+CustomPackage — user-built addon bundles
+</pre>
+<h3>8.4 Partner Domain</h3>
+<pre>
+PartnerProfile 1──0..1 PartnerLegalProfile
+PartnerProfile 1──* PartnerClientData
+PartnerProfile 1──* PartnerInvoice
+PartnerProfile 1──* Subscription (referredByPartnerId)
+</pre>
+<h3>8.5 Platform Config</h3>
+<pre>
+PlatformSettings (singleton) — trial/quota/payment thresholds
+PlatformBotConfig / PlatformGlobalBotConfig — site widget
+SelfLearningConfig (singleton) — extraction schedule
+ZudobotConfig — legacy per-tenant config
+ZudobotGlobalBackup — permanent chat backup
+SecurityState — platform lockout state
+</pre>
+<hr />
+<h2>9. Data Dictionary</h2>
+<h3>9.1 Model Catalog (43 Models)</h3>
+<table><tr><th>Model</th><th>Collection Purpose</th><th>Key Fields</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>User</td><td>Identity, role, botState</td><td>email, role, roles, tenantId, botState, onboardingComplete, twoFactorEnabled, pendingDeleteAt</td></tr><tr><td>TenantProfile</td><td>Tenant + widget config</td><td>tenantId, embedKey, businessName, widgetEnabled, allowedDomain, dailyMessageCount</td></tr><tr><td>Subscription</td><td>Stripe subscription</td><td>userId, plan, status, stripeCustomerId, currentPeriodEnd</td></tr><tr><td>ChatSession</td><td>Live-chat handoff sessions</td><td>tenantId (ObjectId), sessionId, messages, botStatus, handoffRequested</td></tr><tr><td>ConversationSession</td><td>Widget visitor memory</td><td>tenantId, sessionId, messages, sizeBytes</td></tr><tr><td>KnowledgeChunk</td><td>RAG vectors</td><td>tenantId, content, embedding, sourceUrl, chunkIndex</td></tr><tr><td>KnowledgeJob</td><td>Ingestion jobs</td><td>tenantId, status, totalChunks, processedChunks</td></tr><tr><td>KnowledgeRefreshSchedule</td><td>Auto-refresh</td><td>tenantId, schedule, lastRun</td></tr><tr><td>Product</td><td>Product catalog</td><td>tenantId, name, price, stripePaymentLink, isActive</td></tr><tr><td>OrderDraft</td><td>In-progress orders</td><td>tenantId, status, orderPayload</td></tr><tr><td>OrderOutbox</td><td>zuorder relay queue</td><td>status, relayState, retryCount</td></tr><tr><td>Order</td><td>Read-only zuorder projection</td><td>tenantId, externalOrderId</td></tr><tr><td>Invoice</td><td>Billing invoices</td><td>userId, amountDue, stripeInvoiceId, vatAmount</td></tr><tr><td>PartnerProfile</td><td>Partner account</td><td>userId, email, stripeConnectAccountId, status</td></tr><tr><td>PartnerLegalProfile</td><td>Encrypted KYC</td><td>encryptedNationalId, encryptedTaxId, encryptedBankAccount</td></tr><tr><td>PartnerClientData</td><td>Client onboarding</td><td>partnerId, clientEmail, clientTenantId</td></tr><tr><td>PartnerInvoice</td><td>Monthly partner billing</td><td>partnerId, period, totalSales, partnerEarnings</td></tr><tr><td>VipTenant</td><td>VIP overrides</td><td>email, tenantId, baseAiQuota, startDate, endDate</td></tr><tr><td>Notification</td><td>In-app alerts</td><td>tenantId, type, isRead</td></tr><tr><td>KycSubmission</td><td>Tenant KYC</td><td>userId, documentUrl, status</td></tr><tr><td>MasterPlanConfig</td><td>Pricing tiers SSOT</td><td>plan_code, msgQuota, retailPrice, partnerCost</td></tr><tr><td>PackageConfig</td><td>Plan catalog overrides</td><td>planId, price, stripePriceId, isActive</td></tr><tr><td>ReadyPackage</td><td>Pre-built packages</td><td>scenarioIds, finalRetailPrice, isOnSale</td></tr><tr><td>CostPriceScenario</td><td>Cost/margin scenarios</td><td>planCode, inputsV2, calculatedV2</td></tr><tr><td>PricingRateMaster</td><td>Cost rate assumptions</td><td>usdToThb, aiTokenRates, isDefault</td></tr><tr><td>CustomPackage</td><td>User addon bundles</td><td>quotaAddon, memoryAddon, retentionAddon</td></tr><tr><td>ChannelContextToken</td><td>Omnichannel bridge</td><td>platform, token, sessionId, expiresAt</td></tr><tr><td>CustomerMemory</td><td>Cross-session AI memory</td><td>hashedEmail, facts, consentGiven</td></tr><tr><td>FewShotExample</td><td>Self-learning Q&amp;A</td><td>tenantId, question, answer, source</td></tr><tr><td>RagEventLog</td><td>RAG telemetry</td><td>tenantId, method, scores, createdAt</td></tr><tr><td>ConsentRecord</td><td>PDPA consent audit</td><td>tenantId, documentType, consentedAt</td></tr><tr><td>LegalDocument</td><td>Synced legal docs</td><td>documentType, version, content</td></tr><tr><td>StorePaymentConfig</td><td>Order flow settings</td><td>paymentMethods, shippingConfig</td></tr><tr><td>Announcement</td><td>Admin broadcasts</td><td>title, message, recipientCount</td></tr><tr><td>Article</td><td>Blog content</td><td>slug, status, channels</td></tr><tr><td>Config</td><td>Per-tenant key-value</td><td>tenantId, key, value</td></tr><tr><td>PlatformSettings</td><td>Platform thresholds</td><td>trialDays, graceBufferPct</td></tr><tr><td>PlatformBotConfig</td><td>Site demo bot</td><td>embedKey, allowedDomains</td></tr><tr><td>PlatformGlobalBotConfig</td><td>Global platform bot</td><td>globalEmbedKey</td></tr><tr><td>SelfLearningConfig</td><td>Extraction schedule</td><td>enabled, intervalHours</td></tr><tr><td>SecurityState</td><td>Lockout state</td><td>failedAuthCount, exportAbuseCount</td></tr><tr><td>ZudobotConfig</td><td>Legacy bot config</td><td>tenantId, widget settings</td></tr><tr><td>ZudobotGlobalBackup</td><td>Chat backup</td><td>tenantId, sessionData, deletedAt</td></tr></table>
+<h3>9.2 Critical Indexes and Patterns</h3>
+<ul><li><code>User.email</code> — unique</li><li><code>TenantProfile.embedKey</code> — unique</li><li><code>TenantProfile.tenantId</code> — unique</li><li><code>ChatSession</code> — query with both string and ObjectId tenantId (<code>tenantOrOidQ</code>)</li><li><code>KnowledgeChunk</code> — compound index on tenantId + sourceUrl</li></ul>
+<hr />
+<h2>10. API Flow by Process</h2>
+<h3>10.1 Authentication APIs</h3>
+<table><tr><th>Flow</th><th>Route</th><th>Methods</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>Google auth</td><td><code>/api/auth/[...nextauth]</code></td><td>GET, POST</td><td>OAuth sign-in/sign-out</td></tr><tr><td>Sync registration</td><td><code>/api/auth/sync-registration</code></td><td>GET</td><td>Complete pending registration</td></tr><tr><td>Register (legacy)</td><td><code>/api/auth/register</code></td><td>POST</td><td>Initial registration</td></tr><tr><td>Verify 2FA</td><td><code>/api/auth/verify-2fa</code></td><td>POST</td><td>TOTP verification</td></tr><tr><td>Cleanup cookies</td><td><code>/api/auth/cleanup-cookies</code></td><td>POST</td><td>Clear stale auth cookies</td></tr><tr><td>Onboarding</td><td><code>/api/onboarding/complete</code></td><td>POST</td><td>Create User + TenantProfile</td></tr></table>
+<h3>10.2 Widget APIs (apps/web — 8 routes)</h3>
+<table><tr><th>Flow</th><th>Route</th><th>Methods</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>Init</td><td><code>/api/widget/init</code></td><td>OPTIONS, POST</td><td>Validate key + return config</td></tr><tr><td>Chat</td><td><code>/api/widget/chat</code></td><td>OPTIONS, POST</td><td>Main AI conversation</td></tr><tr><td>Checkout</td><td><code>/api/widget/checkout</code></td><td>OPTIONS, POST</td><td>Stripe payment link handoff</td></tr><tr><td>Consent</td><td><code>/api/widget/consent</code></td><td>OPTIONS, POST</td><td>PDPA consent record</td></tr><tr><td>Customer memory</td><td><code>/api/widget/customer-memory</code></td><td>OPTIONS, GET, POST</td><td>Visitor memory</td></tr><tr><td>Context token</td><td><code>/api/widget/ctx/[token]</code></td><td>OPTIONS, GET</td><td>Omnichannel context bridge</td></tr><tr><td>Updates</td><td><code>/api/widget/updates</code></td><td>OPTIONS, GET</td><td>Long-poll session updates</td></tr><tr><td>Upload</td><td><code>/api/widget/upload</code></td><td>OPTIONS, POST</td><td>File upload for chat context</td></tr></table>
+<h3>10.3 Tenant APIs (45 routes)</h3>
+<p>Key groups: bot/config, knowledge (upload/sync/process/reembed/refresh-schedule), products, orders, live-chat (7 sub-routes), 2FA, account delete/recover, GDPR export/delete, notifications, omni-chat, channels (LINE/Meta OAuth), store-config, KYC, line-notify, analytics, invoices, memory.</p>
+<h3>10.4 Admin APIs (45 routes)</h3>
+<p>Key groups: tenants, partners, analytics, revenue, cost-price (CRUD + import/export/recalculate), pricing-rate-master, ready-package, vip-tenants, packages, articles, few-shot-extract, self-learning-config, rag-events, global-bot-config, settings, announcements, omni-chat, delete-account, site-bot-diagnostic, kyc review.</p>
+<h3>10.5 Partner APIs (16 routes)</h3>
+<p>invite, join, verify, provision, buy-for-client, impersonate, clients, client-data, analytics, earnings, invoices, plans, legal-profile, me.</p>
+<h3>10.6 Stripe and Checkout (8 routes)</h3>
+<p><code>/api/stripe/checkout</code>, <code>portal</code>, <code>webhook</code>, <code>partner-checkout</code>, <code>connect/authorize</code>, <code>connect/callback</code>, <code>/api/checkout/custom-package</code>, <code>/api/checkout/validate</code>.</p>
+<h3>10.7 Cron APIs (9 routes)</h3>
+<p>delete-tenant, few-shot-extract, global-chat-backup, kb-auto-refresh, order-relay, partner-billing, purge-zudogu-widgets, seed-global-chat-tenant, vip-sync.</p>
+<h3>10.8 Webhooks (6 routes)</h3>
+<p><code>/api/webhooks/line/[tenantId]</code>, <code>/api/webhooks/meta/[tenantId]</code>, <code>/api/webhooks/tiktok/[tenantId]</code>, <code>/api/line/webhook/[embedKey]</code>, <code>/api/webhook/article</code>, <code>/api/integrations/zuorder/legal-document-sync</code>.</p>
+<h3>10.9 Public APIs (14 routes)</h3>
+<p>pricing, packages, ready-packages, articles, customize-scenarios, zudobot widget/chat/init, sandbox/chat, landing-demo/chat, health, legal-documents.</p>
+<h3>10.10 Embed and Integration (9 routes)</h3>
+<p>embed/chat, embed/config, embed/csp, embed/verify, extension embed-snippet, google-session, oauth/start, wp-install, verify-domain.</p>
+<h3>10.11 apps/api — Chat Engine (21 routes under <code>/api/v1/</code>)</h3>
+<table><tr><th>Route</th><th>Methods</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>/api/v1/chat/message</code></td><td>OPTIONS, POST</td><td>Main chat (SSE streaming)</td></tr><tr><td><code>/api/v1/chat/session</code></td><td>OPTIONS, POST</td><td>Create/resume session</td></tr><tr><td><code>/api/v1/bot/config</code></td><td>OPTIONS, GET</td><td>Bot config</td></tr><tr><td><code>/api/v1/widget/[tenantId]</code></td><td>OPTIONS, GET</td><td>Widget config</td></tr><tr><td><code>/api/v1/live-chat/updates</code></td><td>OPTIONS, GET</td><td>Long-poll updates</td></tr><tr><td><code>/api/v1/custom-commands</code></td><td>OPTIONS, GET, POST, PATCH, DELETE</td><td>Trigger-action rules</td></tr><tr><td><code>/api/v1/rules-log</code></td><td>OPTIONS, GET</td><td>Safety violation logs</td></tr><tr><td><code>/api/v1/admin/*</code></td><td>various</td><td>KB, products, packages, usage, visitors, analytics, line-notify, memory</td></tr><tr><td><code>/api/v1/line/webhook/[embedKey]</code></td><td>POST</td><td>LINE webhook</td></tr></table>
+<p><strong>Total: 189 API route handlers</strong> (168 web + 21 api)</p>
+<hr />
+<h2>11. API Specification</h2>
+<h3>11.1 Widget Init</h3>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Method</td><td>POST</td></tr><tr><td>Path</td><td><code>/api/widget/init</code></td></tr><tr><td>Auth</td><td>Public (embedKey in body)</td></tr><tr><td>Body</td><td><code>{ "key": "&lt;embedKey&gt;" }</code></td></tr><tr><td>Success</td><td><code>{ "ok": true, "config": { botName, welcomeMessage, widgetColor, widgetPosition, requireConsent, ... } }</code></td></tr><tr><td>Errors</td><td><code>missing_key</code> (400), <code>missing_origin</code> (403), <code>invalid_key</code> (403), <code>widget_disabled</code> (403), <code>domain_not_allowed</code> (403)</td></tr></table>
+<h3>11.2 Widget Chat</h3>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Method</td><td>POST</td></tr><tr><td>Path</td><td><code>/api/widget/chat</code></td></tr><tr><td>Body</td><td><code>{ key, sessionId, message, attachments?, consentGiven? }</code></td></tr><tr><td>Max message</td><td>800 characters</td></tr><tr><td>Success</td><td><code>{ ok: true, reply, products?, handoffMode?, blocked? }</code></td></tr><tr><td>Security</td><td>Rate limit, domain allow-list, quota gate, PII scrubbing, usage increment</td></tr><tr><td>AI degraded</td><td><code>{ warning: "ai_degraded" }</code> when Gemini fails but safe fallback sent</td></tr></table>
+<p><strong>Example Request</strong></p>
+<pre>
+{
+  "key": "abc123embedkey",
+  "sessionId": "visitor-001",
+  "message": "มีสินค้าอะไรที่ราคาถูก",
+  "consentGiven": true
+}
+</pre>
+<p><strong>Example Response</strong></p>
+<pre>
+{
+  "ok": true,
+  "reply": "เรามีสินค้าตัวนี้ที่ราคา 990 บาท",
+  "products": [{ "name": "Starter Pack", "price": 990 }]
+}
+</pre>
+<h3>11.3 Knowledge Upload</h3>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Method</td><td>POST</td></tr><tr><td>Path</td><td><code>/api/tenant/knowledge/upload</code></td></tr><tr><td>Auth</td><td>tenant session</td></tr><tr><td>Body</td><td>multipart/form-data (file) or JSON</td></tr><tr><td>Response</td><td>job ID + status</td></tr></table>
+<h3>11.4 Stripe Checkout</h3>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Method</td><td>POST</td></tr><tr><td>Path</td><td><code>/api/stripe/checkout</code></td></tr><tr><td>Auth</td><td>tenant session</td></tr><tr><td>Body</td><td><code>{ planId, addons? }</code></td></tr><tr><td>Response</td><td><code>{ url: "&lt;stripe checkout url&gt;" }</code></td></tr><tr><td>Webhook</td><td>POST <code>/api/stripe/webhook</code> (Stripe signature verification)</td></tr></table>
+<h3>11.5 Omnichannel Webhook</h3>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Method</td><td>POST</td></tr><tr><td>Path</td><td><code>/api/webhooks/line/[tenantId]</code></td></tr><tr><td>Auth</td><td>LINE signature HMAC</td></tr><tr><td>Purpose</td><td>Inbound message events → handoff integration</td></tr></table>
+<h3>11.6 Onboarding Complete</h3>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Method</td><td>POST</td></tr><tr><td>Path</td><td><code>/api/onboarding/complete</code></td></tr><tr><td>Auth</td><td>session (pending registration)</td></tr><tr><td>Body</td><td>business profile + bot config fields</td></tr><tr><td>Effect</td><td>Creates User doc, TenantProfile, trial Subscription</td></tr></table>
+<h3>11.7 Admin Delete Account</h3>
+<table><tr><th>Item</th><th>Value</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Method</td><td>POST</td></tr><tr><td>Path</td><td><code>/api/admin/delete-account</code></td></tr><tr><td>Auth</td><td>super_admin</td></tr><tr><td>Body</td><td><code>{ email, confirm: boolean }</code></td></tr><tr><td>Dry-run</td><td><code>confirm: false</code> returns cascade preview</td></tr><tr><td>Protected</td><td>Refuses <code>zudogu.official@gmail.com</code></td></tr></table>
+<hr />
+<h2>12. Source Code Specification</h2>
+<h3>12.1 Directory Map</h3>
+<table><tr><th>Area</th><th>Path</th><th>Responsibility</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>Web app</td><td><code>apps/web</code></td><td>Next.js UI + 168 API routes</td></tr><tr><td>API app</td><td><code>apps/api</code></td><td>Standalone chatbot API (21 routes)</td></tr><tr><td>Dashboard</td><td><code>apps/dashboard</code></td><td>Standalone analytics</td></tr><tr><td>Widget</td><td><code>packages/widget</code></td><td>Embeddable IIFE bundle</td></tr><tr><td>Middleware</td><td><code>apps/web/middleware.ts</code></td><td>Auth, role, onboarding, 2FA, soft-delete guards</td></tr><tr><td>Env guard</td><td><code>apps/web/lib/env/amplifyGuardrail.ts</code></td><td>Amplify env enforcement</td></tr><tr><td>Models</td><td><code>apps/web/lib/db/models/</code></td><td>43 Mongoose schemas</td></tr><tr><td>AI</td><td><code>apps/web/lib/ai/</code></td><td>Gemini provider, few-shot, self-learning</td></tr><tr><td>Widget logic</td><td><code>apps/web/lib/widget/</code></td><td>Quota gate, domain validation, platform access</td></tr><tr><td>Knowledge</td><td><code>apps/web/lib/knowledge/</code></td><td>Scraper, chunker, embedder, RAG logger</td></tr><tr><td>Payment</td><td><code>apps/web/lib/payment/</code></td><td>Bot state machine, pmRules</td></tr><tr><td>Orders</td><td><code>apps/web/lib/orders/</code></td><td>Draft extraction, slip, relay</td></tr><tr><td>Channels</td><td><code>apps/web/lib/channels/</code></td><td>LINE/Meta/TikTok adapters</td></tr><tr><td>Security</td><td><code>apps/web/lib/security/</code></td><td>Rate limit, PII scrubbing</td></tr><tr><td>Stripe</td><td><code>apps/web/lib/stripe/</code></td><td>Checkout, portal, Connect helpers</td></tr><tr><td>Pricing</td><td><code>apps/web/lib/pricing/</code></td><td>Cost calculator, VIP pricing</td></tr><tr><td>Services</td><td><code>apps/web/lib/services/</code></td><td>Email, LINE notify, integrations</td></tr><tr><td>i18n</td><td><code>apps/web/lib/i18n/</code></td><td>Thai/English translations</td></tr><tr><td>Scripts</td><td><code>scripts/</code></td><td>DB seed, security gate, clone helpers</td></tr></table>
+<h3>12.2 Key Services (apps/api)</h3>
+<table><tr><th>Service</th><th>Purpose</th></tr><tr><td>---</td><td>---</td></tr><tr><td><code>svc_zudobot_checkpackage</code></td><td>Quota check + message count increment</td></tr><tr><td><code>svc_zudobotrules</code></td><td>Prompt injection + safety rules engine</td></tr><tr><td><code>svc_zudobot_recognize</code></td><td>Memory retrieval + save</td></tr><tr><td><code>svc_lineNotify</code></td><td>LINE Messaging API handoff alert</td></tr><tr><td><code>svc_productEmbedding</code></td><td>RAG product vector search</td></tr><tr><td><code>streamGeminiChat</code></td><td>Gemini SSE streaming chat</td></tr></table>
+<h3>12.3 Knowledge Pipeline Constants</h3>
+<table><tr><th>Constant</th><th>Value</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>TIMEOUT_MS</td><td>10000</td><td>HTTP timeout per URL scrape</td></tr><tr><td>MAX_CHARS</td><td>50000</td><td>Max content per page</td></tr><tr><td>CHUNK_SIZE</td><td>500</td><td>Characters per chunk</td></tr><tr><td>CHUNK_OVERLAP</td><td>80</td><td>Overlap between chunks</td></tr><tr><td>MIN_CHUNK_LEN</td><td>80</td><td>Minimum chunk length</td></tr><tr><td>BATCH_SIZE</td><td>20</td><td>Chunks per process call</td></tr></table>
+<hr />
+<h2>13. Error Handling Strategy</h2>
+<h3>13.1 Global Principles</h3>
+<ul><li>User-facing errors normalized to safe Thai/English messages</li><li>Internal stack traces never exposed to clients</li><li>High-risk failures logged server-side (CloudWatch)</li><li>Missing env vars fail fast via <code>amplifyGuardrail.ts</code></li><li>AI errors parsed by <code>geminiErrors.ts</code> with retry guidance</li><li>Widget quota blocks return 200 with <code>blocked: true</code> (not 403)</li></ul>
+<h3>13.2 Error Categories</h3>
+<table><tr><th>Category</th><th>Example codes</th><th>HTTP</th><th>Handling</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>Validation</td><td>missing_fields, invalid_body, message_too_long</td><td>400</td><td>Friendly validation message</td></tr><tr><td>Authorization</td><td>invalid_key, domain_not_allowed, widget_disabled</td><td>403</td><td>Block with reason code</td></tr><tr><td>Auth session</td><td>unauthorized, forbidden, 2fa_required</td><td>401/403</td><td>Redirect or JSON error</td></tr><tr><td>Quota / rate</td><td>rate_limited, quota_exceeded</td><td>429 / 200 blocked</td><td>Retry-after or block message</td></tr><tr><td>AI failure</td><td>gemini_quota_exhausted, gemini_service_unavailable</td><td>503</td><td>User-safe retry message</td></tr><tr><td>Payment</td><td>stripe_error, invalid_plan</td><td>400/500</td><td>Payment-specific message</td></tr><tr><td>DB failure</td><td>server_error</td><td>500</td><td>Generic safe response</td></tr><tr><td>Webhook</td><td>invalid signature</td><td>401</td><td>Reject + log</td></tr></table>
+<h3>13.3 CloudWatch Log Patterns</h3>
+<table><tr><th>Pattern</th><th>Severity</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>[GEMINI_CRITICAL_FAIL]</code></td><td>ERROR</td><td>All embeddings failed</td></tr><tr><td><code>[GEMINI_QUOTA]</code></td><td>WARN</td><td>Quota/rate limit hit</td></tr><tr><td><code>[Gemini Provider]</code></td><td>INFO</td><td>Model used per request</td></tr><tr><td><code>[widget/chat]</code></td><td>WARN/ERROR</td><td>RAG/Gemini non-critical failures</td></tr><tr><td><code>[CRON_START]</code> / <code>[CRON_END]</code></td><td>INFO</td><td>Cron lifecycle</td></tr><tr><td><code>[STRIPE_WEBHOOK]</code></td><td>INFO</td><td>Stripe event received</td></tr></table>
+<hr />
+<h2>14. Error Message Mapping</h2>
+<h3>14.1 Widget API Errors</h3>
+<table><tr><th>Code</th><th>HTTP</th><th>User Message (TH)</th><th>Condition</th></tr><tr><td>---</td><td>---:</td><td>---</td><td>---</td></tr><tr><td>missing_key</td><td>400</td><td>กรุณาระบุ embed key</td><td>Key empty</td></tr><tr><td>missing_fields</td><td>400</td><td>กรุณากรอกข้อมูลให้ครบถ้วน</td><td>Required body fields missing</td></tr><tr><td>invalid_body</td><td>400</td><td>ข้อมูลส่งมาไม่ถูกต้อง</td><td>JSON parse fail</td></tr><tr><td>message_too_long</td><td>400</td><td>ข้อความยาวเกิน 800 ตัวอักษร</td><td>length &gt; 800</td></tr><tr><td>missing_origin</td><td>403</td><td>ไม่พบแหล่งที่มาในการเรียกใช้</td><td>No Origin/Referer</td></tr><tr><td>invalid_key</td><td>403</td><td>คีย์ Widget ไม่ถูกต้อง</td><td>embedKey not found</td></tr><tr><td>widget_disabled</td><td>403</td><td>Widget ถูกปิดใช้งานชั่วคราว</td><td>widgetEnabled = false</td></tr><tr><td>domain_not_allowed</td><td>403</td><td>โดเมนนี้ไม่ได้รับอนุญาต</td><td>Origin not in whitelist</td></tr><tr><td>rate_limited</td><td>429</td><td>กรุณารอสักครู่แล้วลองใหม่</td><td>Upstash rate limit</td></tr><tr><td>product_not_found</td><td>404</td><td>ไม่พบสินค้า</td><td>Product ID invalid</td></tr><tr><td>no_checkout_url</td><td>404</td><td>ไม่พบลิงก์ชำระเงิน</td><td>Stripe link missing</td></tr><tr><td>server_error</td><td>500</td><td>เกิดข้อผิดพลาดภายในระบบ</td><td>Unhandled exception</td></tr></table>
+<h3>14.2 Gemini AI Errors (<code>geminiErrors.ts</code>)</h3>
+<table><tr><th>Code</th><th>HTTP</th><th>Retryable</th><th>User Message (TH)</th></tr><tr><td>---</td><td>---</td><td>---:</td><td>---</td></tr><tr><td>gemini_not_configured</td><td>503</td><td>No</td><td>ระบบ AI ยังไม่พร้อมใช้งาน</td></tr><tr><td>gemini_quota_exhausted</td><td>503</td><td>Yes</td><td>ระบบ AI เต็มชั่วคราว กรุณารอ 1 นาที</td></tr><tr><td>gemini_auth_failed</td><td>503</td><td>No</td><td>การเชื่อมต่อ AI ล้มเหลว</td></tr><tr><td>gemini_invalid_history</td><td>500</td><td>Yes</td><td>ประวัติการสนทนาไม่ถูกต้อง</td></tr><tr><td>gemini_model_not_found</td><td>503</td><td>No</td><td>โมเดล AI ไม่พร้อมใช้งาน</td></tr><tr><td>gemini_precondition_error</td><td>503</td><td>No</td><td>เงื่อนไข AI ไม่ครบถ้วน</td></tr><tr><td>gemini_service_unavailable</td><td>503</td><td>Yes</td><td>ระบบ AI ขัดข้องชั่วคราว</td></tr><tr><td>gemini_error</td><td>500</td><td>Yes</td><td>เกิดข้อผิดพลาดจาก AI</td></tr></table>
+<h3>14.3 Auth Errors (<code>authErrors.ts</code> — NextAuth <code>?error=</code>)</h3>
+<table><tr><th>Code</th><th>User Message (TH)</th></tr><tr><td>---</td><td>---</td></tr><tr><td>AccessDenied</td><td>ฐานข้อมูลไม่พร้อมหรือบัญชีถูกปิดใช้งาน</td></tr><tr><td>Configuration</td><td>การตั้งค่า Google Login ไม่สมบูรณ์</td></tr><tr><td>OAuthSignin</td><td>เกิดข้อผิดพลาดในการเข้าสู่ระบบ Google</td></tr><tr><td>OAuthCallback</td><td>เกิดข้อผิดพลาดใน callback ของ Google</td></tr><tr><td>OAuthAccountNotLinked</td><td>อีเมลนี้ใช้กับวิธีเข้าสู่ระบบอื่นแล้ว</td></tr><tr><td>CallbackRouteError</td><td>เกิดข้อผิดพลาดหลังเข้าสู่ระบบ</td></tr></table>
+<h3>14.4 Knowledge Pipeline Errors</h3>
+<table><tr><th>Code</th><th>HTTP</th><th>User Message (TH)</th><th>Tag</th></tr><tr><td>---</td><td>---:</td><td>---</td><td>---</td></tr><tr><td>gemini_quota_exhausted</td><td>503</td><td>โควต้า Gemini หมด กรุณารอ 1 นาที</td><td><code>[GEMINI_QUOTA]</code></td></tr><tr><td>scrape_failed</td><td>500</td><td>ไม่สามารถดึงข้อมูลจาก URL นี้ได้</td><td><code>[SCRAPE_FAIL]</code></td></tr><tr><td>invalid_url</td><td>400</td><td>URL ไม่ถูกต้อง</td><td>—</td></tr><tr><td>embed_batch_failed</td><td>500</td><td>ไม่สามารถประมวลผลความรู้ได้ทั้งหมด</td><td><code>[GEMINI_CRITICAL_FAIL]</code></td></tr><tr><td>rate_limited</td><td>429</td><td>กรุณารอสักครู่แล้วลองใหม่</td><td>—</td></tr></table>
+<h3>14.5 Auth API Errors</h3>
+<table><tr><th>Code</th><th>HTTP</th><th>Condition</th></tr><tr><td>---</td><td>---:</td><td>---</td></tr><tr><td>unauthorized</td><td>401</td><td>No session</td></tr><tr><td>forbidden</td><td>403</td><td>Insufficient role</td></tr><tr><td>pending_registration</td><td>403</td><td>Onboarding not complete</td></tr><tr><td>2fa_required</td><td>401</td><td>TOTP verification pending</td></tr><tr><td>invalid_2fa_code</td><td>400</td><td>Wrong TOTP code</td></tr></table>
+<h3>14.6 Payment Errors</h3>
+<table><tr><th>Code</th><th>HTTP</th><th>Condition</th></tr><tr><td>---</td><td>---:</td><td>---</td></tr><tr><td>stripe_error</td><td>500</td><td>Stripe API failure</td></tr><tr><td>subscription_not_found</td><td>404</td><td>No subscription record</td></tr><tr><td>invalid_plan</td><td>400</td><td>Plan not in catalog</td></tr><tr><td>already_subscribed</td><td>400</td><td>Duplicate purchase attempt</td></tr></table>
+<hr />
+<h2>15. Warning Message Mapping</h2>
+<table><tr><th>Warning Type / Code</th><th>Trigger</th><th>Message (TH)</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>quota_80</td><td>Monthly usage ≥ 80%</td><td>โควต้าใช้เกิน 80% แล้ว</td></tr><tr><td>quota_95</td><td>Monthly usage ≥ 95%</td><td>โควต้าใกล้เต็ม กรุณาตรวจสอบแผน</td></tr><tr><td>ai_degraded</td><td>Gemini failed, fallback reply sent</td><td>(implicit — reply still returned)</td></tr><tr><td>pending_delete</td><td>Account soft-delete scheduled</td><td>บัญชีกำลังถูกลบและสามารถกู้คืนได้ก่อนกำหนด</td></tr><tr><td>pending_registration</td><td>New user, doc not created</td><td>กรุณาเสร็จสิ้นการลงทะเบียนก่อนใช้งาน</td></tr><tr><td>2fa_pending</td><td>2FA not verified this session</td><td>กรุณายืนยันรหัส 2FA เพื่อใช้งานต่อ</td></tr><tr><td>webhook_retry</td><td>Webhook processing retry</td><td>ระบบกำลัง retry webhook</td></tr><tr><td>rag_lookup_warning</td><td>RAG search non-critical fail</td><td>(logged server-side, chat continues)</td></tr><tr><td>kyc_pending</td><td>KYC not approved</td><td>รอยืนยันตัวตน — บอทถูกระงับ (pending_kyc)</td></tr><tr><td>grace_5pct</td><td>Quota in 5% grace buffer</td><td>ใช้งานในช่วงผ่อนผันโควต้า</td></tr></table>
+<hr />
+<h2>16. Function / Feature / Middleware / Command Mapping</h2>
+<h3>16.1 Middleware Mapping</h3>
+<table><tr><th>Middleware</th><th>File</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>Route guard</td><td><code>apps/web/middleware.ts</code></td><td>Auth, role, onboarding, 2FA, soft-delete routing</td></tr><tr><td>Env guardrail</td><td><code>apps/web/lib/env/amplifyGuardrail.ts</code></td><td>Fail-fast on missing Amplify env vars</td></tr><tr><td>Embed CSP</td><td><code>middleware.ts</code> + <code>/api/embed/csp</code></td><td>Dynamic <code>frame-ancestors</code> for embed routes</td></tr><tr><td>CORS</td><td>Widget/embed route handlers</td><td>Origin validation + CORS headers</td></tr><tr><td>Rate limit</td><td><code>apps/web/lib/security/rateLimit.ts</code></td><td>Upstash Redis (fail-open on widget)</td></tr><tr><td>Stripe webhook verify</td><td><code>/api/stripe/webhook</code></td><td>HMAC signature check</td></tr><tr><td>LINE webhook verify</td><td><code>/api/webhooks/line/*</code></td><td>LINE signature HMAC</td></tr><tr><td>Cron auth</td><td><code>/api/cron/*</code></td><td><code>INTERNAL_CRON_SECRET</code> header</td></tr></table>
+<h3>16.2 Feature → Implementation Mapping</h3>
+<table><tr><th>Feature</th><th>Primary Files / Routes</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Google OAuth login</td><td><code>app/api/auth/[...nextauth]/route.ts</code></td></tr><tr><td>Deferred registration</td><td>JWT <code>pendingRegistration</code> + <code>/api/onboarding/complete</code></td></tr><tr><td>Widget embed</td><td><code>packages/widget</code>, <code>/api/widget/init</code>, <code>/api/widget/chat</code></td></tr><tr><td>Quota gating</td><td><code>lib/widget/quotaGate.ts</code>, <code>lib/payment/botStateMachine.ts</code></td></tr><tr><td>Knowledge RAG</td><td><code>lib/knowledge/*</code>, <code>/api/tenant/knowledge/*</code></td></tr><tr><td>Self-learning</td><td><code>lib/ai/fewShotExtractor.ts</code>, <code>/api/cron/few-shot-extract</code></td></tr><tr><td>Order drafting</td><td><code>lib/orders/*</code>, <code>/api/widget/checkout</code></td></tr><tr><td>Order relay (zuorder)</td><td><code>lib/orders/outbox</code>, <code>/api/cron/order-relay</code></td></tr><tr><td>Live chat handoff</td><td><code>/api/tenant/live-chat/*</code>, <code>lib/channels/*</code></td></tr><tr><td>Omnichannel</td><td><code>/api/webhooks/*</code>, <code>lib/channels/adapters/*</code></td></tr><tr><td>Stripe billing</td><td><code>/api/stripe/*</code>, <code>lib/stripe/*</code></td></tr><tr><td>Partner Connect</td><td><code>/api/stripe/connect/*</code>, <code>/api/partner/*</code></td></tr><tr><td>VIP pricing</td><td><code>lib/pricing/vipPricingUtils.ts</code>, <code>/api/admin/vip-tenants/*</code></td></tr><tr><td>Cost/price calculator</td><td><code>lib/pricing/fnc_price_cost_cal_ai.ts</code>, <code>/api/admin/cost-price/*</code></td></tr><tr><td>Account deletion</td><td><code>/api/tenant/account/delete</code>, <code>/api/admin/delete-account</code></td></tr><tr><td>GDPR</td><td><code>/api/tenant/gdpr/export</code>, <code>/api/tenant/gdpr/delete</code></td></tr><tr><td>PII scrubbing</td><td><code>lib/security/unrecordPii.ts</code></td></tr><tr><td>Platform site bot</td><td><code>lib/platform/*</code>, <code>/api/public/zudobot/*</code></td></tr><tr><td>Chrome extension</td><td><code>/api/integration/extension/*</code></td></tr><tr><td>WordPress plugin</td><td><code>/api/integration/extension/wp-install</code></td></tr><tr><td>Sandbox demo</td><td><code>/api/sandbox/chat</code>, landing demo sections</td></tr><tr><td>Admin impersonation</td><td><code>/api/partner/impersonate</code></td></tr><tr><td>Slip verification</td><td><code>amplifyGuardrail</code> SLIP_VERIFY_* vars</td></tr><tr><td>i18n</td><td><code>lib/i18n/translations/en.ts</code>, <code>th.ts</code></td></tr></table>
+<h3>16.3 Bot State Machine</h3>
+<p>Pure function: <code>evaluateBotState(ctx)</code> in <code>apps/web/lib/payment/botStateMachine.ts</code></p>
+<table><tr><th>State</th><th>Can Respond?</th><th>Label (TH)</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>trial</td><td>Yes</td><td>ทดลองใช้</td></tr><tr><td>trial_quota_daily_exhausted</td><td>No</td><td>โควต้าวันนี้หมด</td></tr><tr><td>trial_expired</td><td>No</td><td>หมดอายุทดลอง</td></tr><tr><td>active</td><td>Yes</td><td>ใช้งานอยู่</td></tr><tr><td>grace_5pct</td><td>Yes</td><td>ช่วงผ่อนผัน</td></tr><tr><td>suspended_quota</td><td>No</td><td>ระงับ (โควต้า)</td></tr><tr><td>suspended_payment</td><td>No</td><td>ระงับ (การชำระ)</td></tr><tr><td>pending_kyc</td><td>No</td><td>รอยืนยันตัวตน</td></tr><tr><td>disabled</td><td>No</td><td>ปิดการใช้งาน</td></tr></table>
+<h3>16.4 Development Commands</h3>
+<table><tr><th>Command</th><th>Purpose</th></tr><tr><td>---</td><td>---</td></tr><tr><td><code>npm run dev</code></td><td>Run web app (port 3000)</td></tr><tr><td><code>npm run dev:api</code></td><td>Run API app (port 4000)</td></tr><tr><td><code>npm run dev:dashboard</code></td><td>Run dashboard (port 4001)</td></tr><tr><td><code>npm run build:widget</code></td><td>Build widget IIFE bundle</td></tr><tr><td><code>npm run build</code></td><td>Build web app</td></tr><tr><td><code>npm run build:api</code></td><td>Build API app</td></tr><tr><td><code>npm run build:dashboard</code></td><td>Build dashboard app</td></tr><tr><td><code>npm run security:gate</code></td><td>Security gate checks</td></tr><tr><td><code>npm run db:test-mongo</code></td><td>Validate MongoDB connection</td></tr><tr><td><code>npm run docker:up</code></td><td>Start local Docker stack</td></tr><tr><td><code>cd apps/web &amp;&amp; npm run db:insert-mock-global-tenant</code></td><td>Dev DB seed helper</td></tr></table>
+<h3>16.5 Environment Variables (Required)</h3>
+<table><tr><th>Variable</th><th>Required</th><th>Purpose</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>MONGO_URI</td><td><strong>MUST</strong></td><td>MongoDB connection</td></tr><tr><td>AUTH_SECRET</td><td><strong>MUST</strong></td><td>NextAuth JWT secret</td></tr><tr><td>AUTH_URL</td><td><strong>MUST</strong></td><td>OAuth callback base URL</td></tr><tr><td>GOOGLE_CLIENT_ID</td><td><strong>MUST</strong></td><td>Google OAuth</td></tr><tr><td>GOOGLE_CLIENT_SECRET</td><td><strong>MUST</strong></td><td>Google OAuth</td></tr><tr><td>GEMINI_API_KEY / GEMINI_API_KEY_LIVE</td><td>ONE-OF</td><td>Gemini access</td></tr><tr><td>INTERNAL_CRON_SECRET</td><td>Cron routes</td><td>Cron authentication</td></tr><tr><td>STRIPE_SECRET_KEY</td><td>Billing</td><td>Stripe API</td></tr><tr><td>STRIPE_WEBHOOK_SECRET</td><td>Billing</td><td>Webhook verification</td></tr><tr><td>UPSTASH_REDIS_REST_URL/TOKEN</td><td>Optional</td><td>Rate limiting</td></tr><tr><td>ORDER_INGEST_SECRET / ZUORDER_INGEST_URL</td><td>Optional</td><td>Order relay</td></tr><tr><td>SLIP_VERIFY_*</td><td>Optional</td><td>Slip auto-verification</td></tr><tr><td>MAIL_PROVIDER / MAIL_API_KEY / MAIL_FROM</td><td>Optional</td><td>Outbound email</td></tr><tr><td>WEBHOOK_SECRET</td><td>Optional</td><td>Article webhook auth</td></tr><tr><td>ZUDOBOT_MASTER_SECRET</td><td>API app</td><td>Master secret for apps/api</td></tr></table>
+<hr />
+<h2>17. Security and Operational Notes</h2>
+<ul><li>All secrets from AWS Amplify Console only — enforced by <code>amplifyGuardrail.ts</code></li><li>No <code>dotenv</code> in app code; no fallback strings for missing secrets</li><li>Google OAuth only — no email/password, no magic links</li><li>Roles: <code>super_admin</code>, <code>admin</code> (alias), <code>tenant</code>, <code>partner_admin</code></li><li>Protected account: <code>zudogu.official@gmail.com</code> — never delete/modify</li><li>Tenant data isolation: every query includes <code>tenantId</code> filter</li><li>Partner legal data: AES-256-GCM encryption at rest</li><li>PII scrubbing before ChatSession persistence</li><li>Widget SRI integrity hash computed at Amplify build</li><li>Health endpoint: <code>GET /api/health</code></li><li>Monitoring: webhook failures, Gemini quota, MongoDB connectivity, cron results</li></ul>
+<hr />
+<h2>18. Role and Permission Matrix</h2>
+<table><tr><th>Role</th><th>Access Scope</th><th>Notes</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>super_admin</td><td>Full platform + <code>/api/admin/*</code></td><td>Account deletion, all admin ops</td></tr><tr><td>admin</td><td>Admin access (alias)</td><td>Redirected same as super_admin</td></tr><tr><td>tenant</td><td><code>/dashboard/*</code>, <code>/api/tenant/*</code></td><td>Standard business owner</td></tr><tr><td>partner_admin</td><td><code>/partner/*</code>, client provisioning</td><td>Can impersonate tenant</td></tr><tr><td>pending</td><td>Onboarding routes only</td><td><code>role=pending</code> until registration complete</td></tr></table>
+<h3>18.1 Middleware Route Matrix</h3>
+<table><tr><th>Route group</th><th>Access condition</th></tr><tr><td>---</td><td>---</td></tr><tr><td>Public</td><td><code>/</code>, <code>/pricing</code>, <code>/login</code>, <code>/partner/join</code>, widget/embed/public APIs</td></tr><tr><td>Widget APIs</td><td>embedKey + domain validation (no session)</td></tr><tr><td>Webhooks</td><td>Signature/token verification</td></tr><tr><td>Cron</td><td><code>INTERNAL_CRON_SECRET</code></td></tr><tr><td><code>/admin/*</code></td><td>super_admin or admin</td></tr><tr><td><code>/partner/*</code></td><td>partner_admin (except join/verify)</td></tr><tr><td><code>/dashboard/*</code></td><td>tenant (admins redirected to admin)</td></tr><tr><td>Pending registration</td><td>onboarding + auth routes only</td></tr><tr><td>Soft-delete</td><td>recover + notice page only</td></tr><tr><td>2FA pending</td><td><code>/login/2fa</code> only</td></tr></table>
+<hr />
+<h2>19. Business Rules and Constraints</h2>
+<ul><li>Widget requires valid embedKey + approved domain</li><li>Widget usage quota-gated by plan and <code>evaluateBotState()</code></li><li>Order pricing computed server-side — never trust LLM output alone</li><li>Deferred user creation: doc written only at onboarding completion</li><li><code>ChatSession.tenantId</code> is ObjectId — always use <code>tenantOrOidQ</code> pattern</li><li>Handoff detection triggers live-chat queue + LINE/Meta/TikTok notification</li><li>Account deletion: soft-delete → cron hard-delete after grace period</li><li>Partner billing: Stripe Connect + monthly consolidated invoice (day 28)</li><li>VIP overrides synced daily via vip-sync cron</li><li>Knowledge auto-refresh via kb-auto-refresh cron (hourly)</li><li>EventBridge is source of truth for crons (not vercel.json on Amplify)</li></ul>
+<hr />
+<h2>20. Appendix — Deployment and Maintenance Checklist</h2>
+<p>1. Verify all required Amplify environment variables are set</p>
+<p>2. Confirm MongoDB Atlas network access and credentials</p>
+<p>3. Validate Stripe webhook endpoint and secret</p>
+<p>4. Ensure Gemini API key exists (primary or live slot)</p>
+<p>5. Rebuild widget bundle when <code>packages/widget</code> changes</p>
+<p>6. Run <code>npm run security:gate</code> before deploy</p>
+<p>7. Configure EventBridge cron rules via <code>amplify/functions/cronDispatcher/setup-eventbridge.sh</code></p>
+<p>8. Monitor: cron execution, webhook failures, Gemini quota, AI degraded warnings</p>
+<p>9. Verify SRI hash updated after widget rebuild (<code>NEXT_PUBLIC_WIDGET_SCRIPT_INTEGRITY</code>)</p>
+<p>10. Test widget init + chat on approved domain after each deploy</p>
+<hr />
+<h2>21. Document Version History</h2>
+<table><tr><th>Version</th><th>Date</th><th>Summary</th><th>Key Changes vs Previous</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>v1.0</td><td>2026-06-22</td><td>Initial TSD baseline from <code>master</code> (22 Jun 2026)</td><td>First comprehensive TSD: 120 API routes, 37 collections, mermaid diagrams, full data dictionary</td></tr><tr><td>v1.1</td><td>2026-07-05</td><td>Source-code aligned update</td><td>Added middleware mapping, error handling, API flow by process, amplify guardrail</td></tr><tr><td>v1.2</td><td>2026-07-05</td><td>Expanded specification</td><td>Role matrix, business rules, sample payloads, deployment checklist</td></tr><tr><td><strong>v2.0</strong></td><td><strong>2026-07-05</strong></td><td><strong>Full production-aligned TSD</strong></td><td>See below</td></tr></table>
+<h3>21.1 v2.0 Changes vs v1.0 (2026-06-22)</h3>
+<table><tr><th>Area</th><th>v1.0</th><th>v2.0 (Current Source)</th><th>Change Type</th></tr><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>API route count (web)</td><td>120</td><td><strong>168</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>API route count (api)</td><td>21</td><td>21</td><td>Unchanged</td></tr><tr><td>Total API handlers</td><td>141</td><td><strong>189</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>MongoDB models</td><td>37 collections</td><td><strong>43 models</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>New models</td><td>—</td><td>CustomerMemory, ConsentRecord, CustomPackage, LegalDocument, RagEventLog, SelfLearningConfig, StorePaymentConfig, ZudobotGlobalBackup</td><td><strong>New</strong></td></tr><tr><td>Cron jobs</td><td>4 (vercel.json)</td><td><strong>9</strong> via EventBridge dispatcher</td><td><strong>Enhanced</strong></td></tr><tr><td>New cron routes</td><td>—</td><td>kb-auto-refresh, few-shot-extract, order-relay, vip-sync</td><td><strong>New</strong></td></tr><tr><td>Widget routes</td><td>5</td><td><strong>8</strong> (+customer-memory, ctx/[token], upload)</td><td><strong>New</strong></td></tr><tr><td>Tenant routes</td><td>~43</td><td><strong>45</strong> (+channels, omni-chat, orders, store-config, knowledge/reembed, refresh-schedule)</td><td><strong>New</strong></td></tr><tr><td>Admin routes</td><td>24</td><td><strong>45</strong> (+cost-price full CRUD, vip-tenants, articles, rag-events, site-bot-diagnostic, pricing-rate-master)</td><td><strong>New</strong></td></tr><tr><td>Public routes</td><td>6</td><td><strong>14</strong> (+articles, ready-packages, customize-scenarios, landing-demo, legal-documents)</td><td><strong>New</strong></td></tr><tr><td>Auth model</td><td>Immediate user creation</td><td><strong>Deferred registration</strong> (JWT pendingRegistration)</td><td><strong>Changed</strong></td></tr><tr><td>Bot states</td><td>8 states</td><td><strong>9 states</strong> (+pending_kyc)</td><td><strong>New</strong></td></tr><tr><td>Order flow</td><td>Basic</td><td><strong>OrderDraft + OrderOutbox + zuorder relay + slip verification</strong></td><td><strong>New</strong></td></tr><tr><td>Self-learning</td><td>Mentioned</td><td><strong>FewShotExample + cron few-shot-extract + admin config</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>Omnichannel</td><td>LINE/Meta/TikTok</td><td><strong>+ ChannelContextToken, tenant channels API, omni-chat</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>AI provider</td><td>Direct Gemini calls</td><td><strong>Provider abstraction + model fallback chain + self-critique</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>Env guardrail</td><td>Documented</td><td><strong>amplifyGuardrail.ts with AMPLIFY_CONFIG getter + slip/mail/order vars</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>Cron infrastructure</td><td>vercel.json</td><td><strong>EventBridge + Lambda dispatcher</strong></td><td><strong>Changed</strong></td></tr><tr><td>Chrome extension</td><td>Not documented</td><td><strong>Extension OAuth + wp-install integration routes</strong></td><td><strong>New</strong></td></tr><tr><td>GDPR</td><td>Basic</td><td><strong>export + delete endpoints documented</strong></td><td><strong>Enhanced</strong></td></tr><tr><td>Pricing engine</td><td>cost-price routes</td><td><strong>Full CRUD + import/export + recalculate + ready-package + vip-tenants</strong></td><td><strong>Enhanced</strong></td></tr></table>
+<h3>21.2 New Features in v2.0 (by Function)</h3>
+<table><tr><th>Feature</th><th>Implementation</th><th>Status</th></tr><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>Customer cross-session memory</td><td><code>/api/widget/customer-memory</code>, <code>CustomerMemory</code> model</td><td>New</td></tr><tr><td>Omnichannel context tokens</td><td><code>/api/widget/ctx/[token]</code>, <code>ChannelContextToken</code></td><td>New</td></tr><tr><td>Order outbox relay</td><td><code>/api/cron/order-relay</code>, <code>OrderOutbox</code> model</td><td>New</td></tr><tr><td>Slip auto-verification</td><td><code>SLIP_VERIFY_*</code> env vars</td><td>New</td></tr><tr><td>Knowledge auto-refresh</td><td><code>/api/cron/kb-auto-refresh</code></td><td>New</td></tr><tr><td>Knowledge re-embed</td><td><code>/api/tenant/knowledge/reembed</code></td><td>New</td></tr><tr><td>Few-shot self-learning</td><td><code>/api/cron/few-shot-extract</code>, <code>FewShotExample</code></td><td>New</td></tr><tr><td>VIP tenant sync</td><td><code>/api/cron/vip-sync</code></td><td>New</td></tr><tr><td>Tenant omni-chat inbox</td><td><code>/api/tenant/omni-chat</code></td><td>New</td></tr><tr><td>Channel setup (Meta OAuth)</td><td><code>/api/tenant/channels</code>, <code>/api/tenant/channels/meta-oauth</code></td><td>New</td></tr><tr><td>Store payment config</td><td><code>/api/tenant/store-config</code>, <code>StorePaymentConfig</code></td><td>New</td></tr><tr><td>Legal document sync</td><td><code>/api/integrations/zuorder/legal-document-sync</code></td><td>New</td></tr><tr><td>Platform site bot diagnostic</td><td><code>/api/admin/site-bot-diagnostic</code></td><td>New</td></tr><tr><td>Custom package checkout</td><td><code>/api/checkout/custom-package</code></td><td>New</td></tr><tr><td>RAG event telemetry</td><td><code>/api/admin/rag-events</code>, <code>RagEventLog</code></td><td>New</td></tr><tr><td>Global chat backup</td><td><code>ZudobotGlobalBackup</code> model</td><td>New</td></tr><tr><td>Deferred user registration</td><td>JWT <code>pendingRegistration</code> + onboarding/complete</td><td>Changed</td></tr></table>
+<hr />
+<h2>22. Summary</h2>
+<p>Zudobot v2.0 เป็น AI Chatbot SaaS platform ที่ผนวก Next.js 14, MongoDB Atlas (43 models), Google Gemini (RAG + chat + self-learning), Stripe (billing + Connect), และ omnichannel webhooks (LINE/Meta/TikTok) เข้าด้วยกัน ระบบมี <strong>189 API endpoints</strong>, middleware-based access control, pure-function bot state machine (9 states), EventBridge cron infrastructure, และ Amplify env guardrail ที่ป้องกัน secret leakage เอกสารฉบับนี้สะท้อน source code ล่าสุด ณ 2026-07-05 และเป็นฐานอ้างอิงสำหรับการพัฒนา ทดสอบ ปฏิบัติการ และส่งต่อทีมที่เกี่ยวข้อง</p>
+<hr />
+<p>*End of Document — TSD-Zudobot-20260705-v2.0*</p>
+</body>
+</html>

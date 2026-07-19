@@ -1,0 +1,73 @@
+name: Deploy Widget to CDN
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "packages/widget/src/**"
+      - "packages/widget/vite.config.ts"
+      - "packages/widget/package.json"
+      - ".github/workflows/deploy-widget.yml"
+  workflow_dispatch: # allow manual trigger
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    name: Build & Upload widget.js to S3
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: packages/widget/package-lock.json
+
+      - name: Install widget dependencies
+        working-directory: packages/widget
+        run: npm ci
+
+      - name: Build widget
+        working-directory: packages/widget
+        run: npx vite build
+
+      - name: Verify output
+        run: |
+          ls -lh packages/widget/dist/
+          echo "widget.js size: $(wc -c < packages/widget/dist/widget.js) bytes"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
+
+      - name: Upload widget.js to S3
+        run: |
+          aws s3 cp packages/widget/dist/widget.js \
+            s3://${{ secrets.WIDGET_S3_BUCKET }}/zudobot/v1/widget.js \
+            --content-type "application/javascript" \
+            --cache-control "public, max-age=86400, s-maxage=86400" \
+            --metadata-directive REPLACE
+
+      - name: Invalidate CloudFront cache
+        if: ${{ secrets.WIDGET_CF_DISTRIBUTION_ID != '' }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.WIDGET_CF_DISTRIBUTION_ID }} \
+            --paths "/zudobot/v1/widget.js"
+
+      - name: Deployment summary
+        run: |
+          echo "### Widget Deployed ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- File: \`widget.js\`" >> $GITHUB_STEP_SUMMARY
+          echo "- CDN: \`https://cdn.zudogu.com/zudobot/v1/widget.js\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Size: $(wc -c < packages/widget/dist/widget.js) bytes" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

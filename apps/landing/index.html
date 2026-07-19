@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ZUDOBOT AI Sales Agent — ผู้ช่วย AI ขายสินค้าออนไลน์ 24/7 สำหรับ SME ไทย โดย ZUDOGU" />
+  <meta property="og:title" content="ZUDOBOT — AI Sales Agent | ZUDOGU" />
+  <meta property="og:description" content="AI ตอบลูกค้าแทนคุณ 24 ชั่วโมง รู้จักสินค้าทุกชิ้น ปิดการขายได้จริง" />
+  <meta property="og:url" content="https://zudobot.zudogu.com" />
+  <title>ZUDOBOT — AI Sales Agent | ZUDOGU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ===================== VARS — ZUDOGU Light Mode ===================== */
+    :root {
+      --bg-primary:    #FFFFFF;
+      --bg-secondary:  #F0F6FF;
+      --bg-card:       #FFFFFF;
+      --bg-card-hover: #EBF4FF;
+      --border:        rgba(13,24,41,0.10);
+      --border-gold:   rgba(180,100,0,0.22);
+      --border-cyan:   rgba(0,140,175,0.25);
+
+      --gold:       #B86B00;
+      --gold-light: #F5A623;
+      --cyan:       #007E9E;
+      --cyan-light: #00C8E8;
+      --blue:       #1E5BC6;
+      --blue-light: #4A90E2;
+
+      --text-primary:   #0D1829;
+      --text-secondary: #2E4A6E;
+      --text-muted:     #6B7FA3;
+
+      --grad-gold: linear-gradient(135deg, #B86B00, #F5A623);
+      --grad-blue: linear-gradient(135deg, #1E5BC6, #00C8E8);
+      --grad-cyan: linear-gradient(135deg, #007E9E, #00C8E8);
+
+      --font-h: 'Outfit','Sarabun',sans-serif;
+      --font-b: 'Sarabun','Outfit',sans-serif;
+      --r: 16px; --r-sm: 8px;
+      --shadow-gold: 0 0 48px rgba(180,100,0,0.15);
+      --shadow-cyan: 0 0 48px rgba(0,140,175,0.15);
+      --shadow-card: 0 2px 16px rgba(13,24,41,0.06);
+      --ease: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body { font-family:var(--font-b); background:var(--bg-primary); color:var(--text-primary); line-height:1.6; overflow-x:hidden; }
+    img  { max-width:100%; height:auto; }
+    a    { text-decoration:none; color:inherit; }
+
+    .container { max-width:1100px; margin:0 auto; padding:0 24px; }
+    .section    { padding:96px 0; }
+    .section-alt { background:var(--bg-secondary); }
+
+    .label   { font-family:var(--font-h); font-size:11px; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--gold); margin-bottom:14px; }
+    .divider { width:52px; height:3px; background:var(--grad-gold); border-radius:2px; margin-bottom:22px; }
+    .section-title { font-family:var(--font-h); font-size:clamp(28px,5vw,46px); font-weight:800; line-height:1.15; margin-bottom:14px; }
+    .section-sub   { font-size:17px; color:var(--text-secondary); max-width:560px; line-height:1.75; }
+    .sh { margin-bottom:56px; }
+    .sh.center { text-align:center; }
+    .sh.center .section-sub { margin:0 auto; }
+    .sh.center .divider     { margin:0 auto 22px; }
+
+    .tg { background:var(--grad-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .tb { background:var(--grad-blue); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .tc { background:var(--grad-cyan); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* ===== BUTTONS ===== */
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 26px; border-radius:var(--r-sm); font-family:var(--font-h); font-size:15px; font-weight:600; cursor:pointer; transition:var(--ease); border:none; white-space:nowrap; }
+    .btn-gold    { background:var(--grad-gold); color:#0d1829; }
+    .btn-gold:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(180,100,0,.25); }
+    .btn-outline { background:transparent; color:var(--text-primary); border:1.5px solid var(--border); }
+    .btn-outline:hover { border-color:var(--gold); color:var(--gold); transform:translateY(-2px); }
+    .btn-white   { background:#fff; color:var(--blue); }
+    .btn-white:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(255,255,255,.25); }
+
+    /* ===== NAVBAR ===== */
+    .nav { position:fixed; top:0; left:0; right:0; z-index:1000; padding:18px 0; transition:var(--ease); }
+    .nav.scrolled {
+      background:rgba(255,255,255,.97); backdrop-filter:blur(20px);
+      padding:12px 0; border-bottom:1px solid var(--border);
+      box-shadow:0 2px 24px rgba(13,24,41,0.08);
+    }
+    .nav-inner { display:flex; align-items:center; justify-content:space-between; }
+    .nav-logo  { display:flex; align-items:center; gap:10px; }
+    .logo-icon { width:38px; height:38px; border-radius:9px; background:var(--grad-blue); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .brand-main { font-family:var(--font-h); font-size:20px; font-weight:900; letter-spacing:.04em; }
+    .brand-by   { font-family:var(--font-h); font-size:11px; font-weight:500; color:var(--text-muted); }
+    .nav-right  { display:flex; gap:10px; align-items:center; }
+
+    /* ===== HERO ===== */
+    #hero { min-height:100vh; display:flex; align-items:center; position:relative; overflow:hidden; padding-top:80px; }
+    .orb { position:absolute; border-radius:50%; filter:blur(120px); pointer-events:none; animation:breathe 9s ease-in-out infinite; }
+    .orb-1 { width:520px; height:520px; background:var(--blue); opacity:.06; top:-160px; right:-80px; }
+    .orb-2 { width:380px; height:380px; background:var(--gold); opacity:.09; bottom:-60px; left:-60px; animation-delay:-4s; }
+    .orb-3 { width:260px; height:260px; background:var(--cyan); opacity:.07; top:40%; left:38%; animation-delay:-2s; }
+    @keyframes breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    .hero-wrap { position:relative; z-index:1; max-width:700px; }
+    .hero-badge { display:inline-block; margin-bottom:24px; padding:7px 18px; border-radius:100px; border:1px solid rgba(180,100,0,.25); font-family:var(--font-h); font-size:11px; font-weight:600; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); background:rgba(180,100,0,.04); }
+    .hero-h1 { font-family:var(--font-h); font-size:clamp(52px,9vw,88px); font-weight:900; line-height:1.02; letter-spacing:-.02em; margin-bottom:10px; }
+    .hero-h2 { font-family:var(--font-h); font-size:clamp(18px,3vw,28px); font-weight:400; color:var(--text-secondary); margin-bottom:24px; line-height:1.4; }
+    .hero-p  { font-size:17px; color:var(--text-secondary); line-height:1.85; margin-bottom:40px; max-width:540px; }
+    .hero-cta { display:flex; gap:14px; flex-wrap:wrap; }
+
+    /* ===== DEMO ===== */
+    #demo { padding:96px 0; }
+    .store-tabs { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:40px; justify-content:center; }
+    .store-tab {
+      display:flex; align-items:center; gap:8px;
+      padding:10px 22px; border-radius:100px; cursor:pointer;
+      border:1.5px solid var(--border); background:var(--bg-card);
+      font-family:var(--font-h); font-size:14px; font-weight:500;
+      color:var(--text-secondary); transition:var(--ease); box-shadow:var(--shadow-card);
+    }
+    .store-tab:hover  { border-color:var(--cyan); color:var(--cyan); transform:translateY(-2px); }
+    .store-tab.active { border-color:var(--cyan); background:rgba(0,126,158,.07); color:var(--cyan); font-weight:700; }
+
+    .demo-layout { display:grid; grid-template-columns:1fr 420px; gap:32px; align-items:start; }
+
+    /* Products panel */
+    .products-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r); padding:28px; box-shadow:var(--shadow-card); }
+    .panel-label  { font-family:var(--font-h); font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+    .store-hname  { font-family:var(--font-h); font-size:22px; font-weight:800; margin-bottom:4px; }
+    .store-hdesc  { font-size:14px; color:var(--text-muted); margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+    .products-list { display:flex; flex-direction:column; gap:10px; }
+    .prod-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 16px; border-radius:var(--r-sm);
+      background:var(--bg-secondary); border:1px solid var(--border); transition:var(--ease);
+    }
+    .prod-item:hover { border-color:var(--border-gold); transform:translateX(4px); }
+    .prod-name  { font-size:14px; font-weight:500; color:var(--text-primary); }
+    .prod-price { font-family:var(--font-h); font-size:15px; font-weight:700; color:var(--gold); }
+    .prod-free  { font-family:var(--font-h); font-size:14px; font-weight:700; color:var(--cyan); }
+
+    /* Chat panel */
+    .chat-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow-card); display:flex; flex-direction:column; }
+    .chat-head  { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+    .bot-avatar { width:40px; height:40px; border-radius:50%; background:var(--grad-blue); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .bot-name   { font-family:var(--font-h); font-size:15px; font-weight:700; }
+    .bot-role   { font-size:12px; color:var(--text-muted); }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; margin-left:auto; box-shadow:0 0 6px rgba(34,197,94,.5); animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    .chat-messages { flex:1; min-height:320px; max-height:400px; overflow-y:auto; padding:18px 18px 10px; display:flex; flex-direction:column; gap:10px; }
+    .chat-messages::-webkit-scrollbar { width:4px; }
+    .chat-messages::-webkit-scrollbar-track { background:transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+    .msg     { max-width:85%; word-break:break-word; }
+    .msg-bot { align-self:flex-start; }
+    .msg-usr { align-self:flex-end; }
+    .msg-bubble { padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.65; }
+    .msg-bot .msg-bubble { background:var(--bg-secondary); color:var(--text-primary); border-bottom-left-radius:4px; }
+    .msg-usr .msg-bubble { background:var(--grad-blue); color:#fff; border-bottom-right-radius:4px; }
+
+    .typing-dots { display:flex; gap:5px; padding:4px 0; }
+    .typing-dots span { width:7px; height:7px; border-radius:50%; background:var(--text-muted); animation:dot 1.4s infinite; }
+    .typing-dots span:nth-child(2) { animation-delay:.2s; }
+    .typing-dots span:nth-child(3) { animation-delay:.4s; }
+    @keyframes dot { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+    .quick-btns { padding:0 18px 14px; display:flex; flex-direction:column; gap:6px; }
+    .quick-btn {
+      padding:9px 14px; border-radius:var(--r-sm);
+      border:1px solid var(--border); background:transparent;
+      font-family:var(--font-b); font-size:13px; font-weight:500;
+      color:var(--text-secondary); cursor:pointer; text-align:left; transition:var(--ease);
+    }
+    .quick-btn:hover { border-color:var(--cyan); color:var(--cyan); background:rgba(0,126,158,.04); }
+
+    .chat-footer { padding:14px 18px; border-top:1px solid var(--border); }
+    .input-row   { display:flex; gap:8px; }
+    .chat-input  {
+      flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:var(--r-sm);
+      font-family:var(--font-b); font-size:14px; color:var(--text-primary);
+      background:var(--bg-secondary); outline:none; transition:var(--ease);
+    }
+    .chat-input:focus { border-color:var(--cyan); background:var(--bg-card); }
+    .send-btn {
+      padding:10px 18px; background:var(--grad-blue); color:#fff;
+      border:none; border-radius:var(--r-sm); cursor:pointer;
+      font-family:var(--font-h); font-size:14px; font-weight:600; transition:var(--ease);
+    }
+    .send-btn:hover    { transform:translateY(-1px); box-shadow:var(--shadow-cyan); }
+    .send-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .chat-meta   { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+    .msg-count   { font-size:12px; color:var(--text-muted); }
+    .reset-link  { font-size:12px; color:var(--cyan); cursor:pointer; background:none; border:none; font-family:var(--font-b); transition:var(--ease); }
+    .reset-link:hover { text-decoration:underline; }
+
+    /* ===== HOW IT WORKS ===== */
+    .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:32px; }
+    .step  { text-align:center; padding:36px 24px; }
+    .step-num   { font-family:var(--font-h); font-size:11px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--text-muted); margin-bottom:16px; }
+    .step-icon  { font-size:48px; margin-bottom:18px; display:block; }
+    .step-title { font-family:var(--font-h); font-size:18px; font-weight:700; margin-bottom:10px; }
+    .step-desc  { font-size:15px; color:var(--text-secondary); line-height:1.7; }
+
+    /* ===== FEATURES ===== */
+    .feat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+    .feat-card {
+      padding:32px 28px; border:1px solid var(--border); border-radius:var(--r);
+      background:var(--bg-card); box-shadow:var(--shadow-card); transition:var(--ease);
+    }
+    .feat-card:hover  { transform:translateY(-4px); border-color:var(--border-cyan); box-shadow:var(--shadow-cyan); }
+    .feat-icon  { font-size:36px; margin-bottom:16px; display:block; }
+    .feat-title { font-family:var(--font-h); font-size:16px; font-weight:700; margin-bottom:8px; }
+    .feat-desc  { font-size:14px; color:var(--text-secondary); line-height:1.7; }
+
+    /* ===== CTA ===== */
+    .cta-box { background:var(--grad-blue); color:#fff; border-radius:var(--r); padding:72px 48px; text-align:center; }
+    .cta-box h2 { font-family:var(--font-h); font-size:clamp(26px,4vw,40px); font-weight:800; margin-bottom:16px; }
+    .cta-box p  { font-size:17px; opacity:.88; line-height:1.75; margin-bottom:36px; max-width:520px; margin-left:auto; margin-right:auto; }
+
+    /* ===== FOOTER ===== */
+    footer { background:#040a14; border-top:1px solid rgba(255,255,255,.08); padding:48px 0 28px; }
+    .ft-inner  { display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center; }
+    .ft-logo   { display:flex; align-items:center; gap:10px; }
+    .ft-brand  { font-family:var(--font-h); font-size:22px; font-weight:900; letter-spacing:.06em; }
+    .ft-slogan { font-size:11px; font-weight:600; letter-spacing:.3em; text-transform:uppercase; color:rgba(255,255,255,.42); }
+    .ft-line   { width:100%; height:1px; background:rgba(255,255,255,.10); }
+    .ft-copy   { font-size:13px; color:rgba(255,255,255,.35); }
+    .ft-link   { color:rgba(255,255,255,.55); transition:var(--ease); }
+    .ft-link:hover { color:var(--gold-light); }
+
+    /* ===== SCROLL ANIMATION ===== */
+    .fu { opacity:0; transform:translateY(24px); transition:opacity .65s ease, transform .65s ease; }
+    .fu.vis { opacity:1; transform:none; }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:900px) {
+      .demo-layout { grid-template-columns:1fr; }
+      .chat-panel  { order:-1; }
+      .steps       { grid-template-columns:1fr; }
+      .feat-grid   { grid-template-columns:1fr 1fr; }
+      .cta-box     { padding:48px 28px; }
+    }
+    @media(max-width:600px) {
+      .section   { padding:64px 0; }
+      .feat-grid { grid-template-columns:1fr; }
+      .hero-cta  { flex-direction:column; align-items:stretch; }
+      .hero-cta .btn { justify-content:center; }
+      .store-tabs { gap:8px; }
+      .store-tab  { padding:8px 14px; font-size:13px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================================================
+     NAVBAR
+     ================================================ -->
+<nav class="nav" id="navbar">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-logo">
+        <div class="logo-icon">🤖</div>
+        <div>
+          <div class="brand-main tc">ZUDOBOT</div>
+          <div class="brand-by">by ZUDOGU</div>
+        </div>
+      </a>
+      <div class="nav-right">
+        <a href="https://zudogu.com" class="btn btn-outline" target="_blank">← ZUDOGU</a>
+        <a href="#demo" class="btn btn-gold">💬 ทดลองใช้เลย</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ================================================
+     HERO
+     ================================================ -->
+<section id="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="container">
+    <div class="hero-wrap">
+      <span class="hero-badge">✨ AI Sales Agent เวอร์ชัน BETA</span>
+      <h1 class="hero-h1 tc">ZUDOBOT</h1>
+      <p class="hero-h2">AI ขายสินค้าแทนคุณ&ensp;·&ensp;24 ชั่วโมง</p>
+      <p class="hero-p">
+        ลืมวันหยุดออกร้านไปได้เลย ZUDOBOT เรียนรู้ทุกสินค้าในร้าน
+        ตอบคำถามลูกค้า แนะนำสินค้า และแจ้งเตือนเมื่อลูกค้าพร้อมซื้อ
+        ตลอด 24 ชั่วโมง 7 วัน
+      </p>
+      <div class="hero-cta">
+        <a href="#demo" class="btn btn-gold">💬 ทดลองแชทเลย</a>
+        <a href="#how" class="btn btn-outline">ดูวิธีการทำงาน →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     LIVE DEMO
+     ================================================ -->
+<section id="demo" class="section">
+  <div class="container">
+    <div class="sh center fu">
+      <div class="label">Live Demo</div>
+      <div class="divider"></div>
+      <h2 class="section-title">ทดลองแชทกับ AI ของแต่ละร้าน</h2>
+      <p class="section-sub">AI เปลี่ยนบุคลิก ชื่อ และความรู้สินค้าตามร้านที่เลือกทันที</p>
+    </div>
+
+    <div class="store-tabs fu" id="storeTabs">
+      <button class="store-tab active" data-store="fashion">👗 เสื้อผ้าแฟชัน</button>
+      <button class="store-tab" data-store="perfume">🌸 น้ำหอม</button>
+      <button class="store-tab" data-store="garden">🌿 ทำสวน</button>
+      <button class="store-tab" data-store="zudogu">🚀 ZUDOGU</button>
+    </div>
+
+    <div class="demo-layout fu">
+      <!-- Products Panel -->
+      <div class="products-panel">
+        <div class="panel-label">ตัวอย่างสินค้าในร้าน</div>
+        <div class="store-hname" id="storeNameDisplay"></div>
+        <div class="store-hdesc" id="storeDescDisplay"></div>
+        <div class="products-list" id="productsList"></div>
+      </div>
+
+      <!-- Chat Panel -->
+      <div class="chat-panel">
+        <div class="chat-head">
+          <div class="bot-avatar" id="botAvatar">🤖</div>
+          <div>
+            <div class="bot-name" id="botNameDisplay">—</div>
+            <div class="bot-role" id="botRoleDisplay">AI Sales Agent</div>
+          </div>
+          <div class="status-dot"></div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="quick-btns" id="quickBtns"></div>
+        <div class="chat-footer">
+          <div class="input-row">
+            <input class="chat-input" id="chatInput" type="text" placeholder="พิมพ์ข้อความของคุณ..." />
+            <button class="send-btn" id="sendBtn" onclick="handleSend()">ส่ง</button>
+          </div>
+          <div class="chat-meta">
+            <span class="msg-count" id="msgCount"></span>
+            <button class="reset-link" onclick="resetChat()">🔄 เริ่มใหม่</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     HOW IT WORKS
+     ================================================ -->
+<section id="how" class="section section-alt">
+  <div class="container">
+    <div class="sh center fu">
+      <div class="label">วิธีการทำงาน</div>
+      <div class="divider"></div>
+      <h2 class="section-title">ตั้งค่าง่าย ใช้ได้เลยภายใน 5 นาที</h2>
+    </div>
+    <div class="steps fu">
+      <div class="step">
+        <div class="step-num">STEP 01</div>
+        <span class="step-icon">🏪</span>
+        <div class="step-title">เชื่อมต่อร้านค้า</div>
+        <p class="step-desc">เพิ่มสินค้า ตั้งค่าบุคลิก AI ให้เข้ากับแบรนด์ของคุณ — ใช้เวลาไม่กี่นาที ไม่ต้องมีความรู้ด้าน IT</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 02</div>
+        <span class="step-icon">🧠</span>
+        <div class="step-title">AI เรียนรู้สินค้าทุกชิ้น</div>
+        <p class="step-desc">ZUDOBOT จดจำชื่อ ราคา ไซส์ และรายละเอียดสินค้าทั้งหมดในร้านโดยอัตโนมัติ</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 03</div>
+        <span class="step-icon">💬</span>
+        <div class="step-title">ตอบลูกค้าแทนคุณ 24/7</div>
+        <p class="step-desc">ลูกค้าถามอะไรก็ตอบได้ แนะนำสินค้า ปิดการขาย และแจ้งเตือนเมื่อมีคนพร้อมซื้อ</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     FEATURES
+     ================================================ -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="sh center fu">
+      <div class="label">ฟีเจอร์เด่น</div>
+      <div class="divider"></div>
+      <h2 class="section-title">ทุกอย่างที่ร้านค้าออนไลน์ต้องการ</h2>
+    </div>
+    <div class="feat-grid fu">
+      <div class="feat-card">
+        <span class="feat-icon">🇹🇭</span>
+        <div class="feat-title">ตอบภาษาไทยเป็นธรรมชาติ</div>
+        <p class="feat-desc">เชี่ยวชาญภาษาไทยเต็มรูปแบบ ลูกค้าไม่รู้สึกว่าคุยกับบอท สร้างประสบการณ์ที่ดีกว่า</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🎭</span>
+        <div class="feat-title">ปรับบุคลิก AI ได้เอง</div>
+        <p class="feat-desc">ตั้งชื่อ โทนพูด และความเชี่ยวชาญให้ AI ตรงกับ Brand Identity ของร้านคุณ</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🔍</span>
+        <div class="feat-title">แนะนำสินค้าอัจฉริยะ</div>
+        <p class="feat-desc">วิเคราะห์ความต้องการของลูกค้าและแนะนำสินค้าที่ใช่ได้ทันที เพิ่ม Conversion Rate</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🔔</span>
+        <div class="feat-title">LINE Notify แจ้งเตือนทันที</div>
+        <p class="feat-desc">ส่งสัญญาณเตือนเจ้าของร้านเมื่อลูกค้าพร้อมซื้อ — ไม่พลาดโอกาสปิดการขาย</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🛡️</span>
+        <div class="feat-title">Constitutional AI</div>
+        <p class="feat-desc">ระบบควบคุม AI ตลอดเวลา ป้องกันคำตอบที่ไม่เหมาะสม รักษาภาพลักษณ์ร้านค้า</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">⚡</span>
+        <div class="feat-title">Streaming Real-time</div>
+        <p class="feat-desc">ตอบกลับแบบ Streaming ทันที ลูกค้าเห็นคำตอบแบบ real-time ไม่ต้องรอนาน</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     CTA
+     ================================================ -->
+<section id="cta" class="section section-alt">
+  <div class="container">
+    <div class="cta-box fu">
+      <h2>🚀 พร้อมให้ ZUDOBOT ดูแลลูกค้าแทนคุณ?</h2>
+      <p>เริ่มต้นใช้งาน ZUDOBOT สำหรับร้านค้าจริงของคุณ<br>ติดต่อทีมงาน ZUDOGU เพื่อรับ Demo และราคาพิเศษ</p>
+      <a href="mailto:office@zudogu.com" class="btn btn-white">📧 ติดต่อ office@zudogu.com</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     FOOTER
+     ================================================ -->
+<footer>
+  <div class="container">
+    <div class="ft-inner">
+      <div class="ft-logo">
+        <div class="logo-icon" style="width:44px;height:44px;font-size:22px;border-radius:10px;">🤖</div>
+        <div>
+          <div class="ft-brand tg">ZUDOBOT</div>
+          <div class="ft-slogan" style="font-size:10px;letter-spacing:.2em;">by ZUDOGU CO., LTD.</div>
+        </div>
+      </div>
+      <p class="ft-slogan">AI SALES AGENT FOR THAI SMEs</p>
+      <div class="ft-line"></div>
+      <p class="ft-copy">
+        Powered by Gemini AI&ensp;·&ensp;
+        <a href="https://zudogu.com" class="ft-link">zudogu.com</a>&ensp;·&ensp;
+        <a href="mailto:office@zudogu.com" class="ft-link">office@zudogu.com</a>
+      </p>
+      <p class="ft-copy">© 2026 ZUDOGU CO., LTD. (บริษัท ซูโดกุ จำกัด) All Rights Reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="./js/config.js"></script>
+<script>window.ZUDOBOT_CONFIG = window.ZUDOBOT_CONFIG || { apiBase: 'https://zudobot.zudogu.com' };</script>
+<script>
+/* ============================================================
+   STORE DATA
+   ============================================================ */
+var STORES = {
+  fashion: {
+    icon: '👗',
+    name: 'เสื้อผ้าแฟชันผู้หญิง',
+    botName: 'ฝ้าย',
+    role: 'AI Sales Agent — แฟชันสไตล์เกาหลี',
+    desc: 'ร้านเสื้อผ้าสไตล์เกาหลี คุณภาพดี ราคาคุ้มค่า',
+    products: [
+      { name: 'เดรสลายดอกคอวี',              price: 590  },
+      { name: 'กระโปรง Boho ยาว',             price: 490  },
+      { name: 'เสื้อ Crop Top โอเวอร์ไซซ์',  price: 290  },
+      { name: 'กางเกงขาบานลายสก็อต',          price: 650  },
+      { name: 'เซ็ตเสื้อ+กางเกงขาสั้น Linen', price: 790 },
+    ],
+    system: 'คุณคือฝ้าย AI Sales Agent ของร้านเสื้อผ้าแฟชันผู้หญิงสไตล์เกาหลี ตอบภาษาไทยเป็นกันเอง สุภาพ กระตุ้นการซื้อด้วยความจริงใจ\n\nสินค้า:\n- เดรสลายดอกคอวี 590฿ (S/M/L/XL)\n- กระโปรง Boho ยาว 490฿ (S/M/L)\n- เสื้อ Crop Top โอเวอร์ไซซ์ 290฿ (S/M/L/XL/2XL)\n- กางเกงขาบานลายสก็อต 650฿ (S/M/L/XL)\n- เซ็ตเสื้อ+กางเกงขาสั้น Linen 790฿ (S/M/L)\n\nส่งทุกวัน 1-3 วันทำการ รับเปลี่ยนไซส์ภายใน 7 วัน\n\nตอบสั้น 2-4 ประโยค ใช้ emoji บ้างเล็กน้อย',
+    greet: 'สวัสดีค่ะ ฉันชื่อฝ้าย 😊 เป็น AI ผู้ช่วยของร้านเสื้อผ้าแฟชัน วันนี้สนใจชุดแบบไหนคะ?',
+    quick: ['มีไซส์ไหนบ้าง วัดตัวยังไง?','แนะนำชุดใส่ไปงานแต่งงานหน่อย','ชุดไหนกำลัง trending ตอนนี้?','ส่งถึงบ้านกี่วัน?'],
+  },
+  perfume: {
+    icon: '🌸',
+    name: 'น้ำหอมและบิวตี้',
+    botName: 'มล',
+    role: 'AI Sales Agent — น้ำหอมพรีเมียม',
+    desc: 'น้ำหอมนำเข้าของแท้ 100% คัดสรรกลิ่นพรีเมียมจากยุโรป',
+    products: [
+      { name: 'Floral Bloom EDP 50ml',   price: 1290 },
+      { name: 'Ocean Breeze EDT 100ml',  price: 890  },
+      { name: 'Rose Noir EDP 30ml',      price: 1590 },
+      { name: 'Vanilla Dream EDC 100ml', price: 790  },
+      { name: 'Oud Royal EDP 50ml',      price: 2490 },
+    ],
+    system: 'คุณคือมล AI Sales Agent ของร้านน้ำหอม ตอบภาษาไทยสุภาพ มีเสน่ห์ แนะนำกลิ่นตามโอกาสและอารมณ์\n\nสินค้า:\n- Floral Bloom EDP 50ml 1,290฿ (ดอกไม้ หวาน อ่อนโยน)\n- Ocean Breeze EDT 100ml 890฿ (ทะเล สดชื่น เหมาะกลางวัน)\n- Rose Noir EDP 30ml 1,590฿ (กุหลาบดำ เซ็กซี่ ออกงานกลางคืน)\n- Vanilla Dream EDC 100ml 790฿ (วานิลลา หวาน น่ารัก)\n- Oud Royal EDP 50ml 2,490฿ (Oud หรู เข้มข้น ทนนาน)\n\nของแท้ 100% ส่งฟรีเมื่อซื้อครบ 1,500฿ มีตัวอย่างกลิ่น 1ml\n\nตอบสั้น 2-4 ประโยค ใช้ emoji บ้าง',
+    greet: 'สวัสดีค่ะ ฉันชื่อมล 🌸 ผู้เชี่ยวชาญน้ำหอมของร้าน วันนี้ต้องการกลิ่นแบบไหนคะ?',
+    quick: ['แนะนำน้ำหอมใส่ไปทำงานหน่อย','มีกลิ่นไหนทนนานที่สุด?','ต้องการกลิ่นหวาน ๆ แบบไหนดี?','ส่งถึงบ้านกี่วัน?'],
+  },
+  garden: {
+    icon: '🌿',
+    name: 'อุปกรณ์ทำสวน',
+    botName: 'ต้น',
+    role: 'AI Sales Agent — คนรักต้นไม้',
+    desc: 'อุปกรณ์ทำสวนครบครัน สำหรับคนรักต้นไม้ทุกระดับ',
+    products: [
+      { name: 'ชุดเครื่องมือทำสวน 5 ชิ้น', price: 450 },
+      { name: 'กระถางซีเมนต์ DIY',          price: 280 },
+      { name: 'ดินปลูกต้นไม้ผสม 5L',        price: 129 },
+      { name: 'ปุ๋ยอินทรีย์ Premium 1kg',    price: 199 },
+      { name: 'สายยางรดน้ำ 10m + หัวฉีด',   price: 390 },
+    ],
+    system: 'คุณคือต้น AI Sales Agent ของร้านอุปกรณ์ทำสวน ตอบภาษาไทยเป็นกันเอง แนะนำการปลูกต้นไม้ได้ดี\n\nสินค้า:\n- ชุดเครื่องมือทำสวน 5 ชิ้น 450฿\n- กระถางซีเมนต์ DIY 280฿\n- ดินปลูกผสมพร้อมใช้ 5L 129฿\n- ปุ๋ยอินทรีย์ Premium 1kg 199฿\n- สายยางรดน้ำ 10m + หัวฉีด 390฿\n\nส่งทั่วประเทศ 2-4 วัน มีคำแนะนำปลูกต้นไม้ฟรีทุกออเดอร์\n\nตอบสั้น 2-4 ประโยค ให้ข้อมูลปลูกต้นไม้ที่มีประโยชน์ด้วย',
+    greet: 'สวัสดีครับ ผมชื่อต้น 🌿 AI ผู้ช่วยร้านทำสวน วันนี้จะปลูกอะไร หรืออยากได้อุปกรณ์อะไรครับ?',
+    quick: ['เริ่มต้นทำสวนต้องซื้ออะไรบ้าง?','ปลูกต้นไม้ในคอนโดได้ไหม?','ดินปลูกแตกต่างจากดินทั่วไปยังไง?','ส่งถึงบ้านกี่วัน?'],
+  },
+  zudogu: {
+    icon: '🚀',
+    name: 'ZUDOGU Platform',
+    botName: 'ซูโด',
+    role: 'AI ของ ZUDOGU',
+    desc: 'แพลตฟอร์มอีคอมเมิร์ซและ AI Agent สำหรับ SME ไทย',
+    products: [
+      { name: 'Dives Space — เปิดร้านฟรี', price: 0    },
+      { name: 'ZUDOBOT AI Agent',           price: 999,  suffix: '/เดือน' },
+      { name: 'Premium Package',            price: 2499, suffix: '/เดือน' },
+      { name: 'Enterprise Solution',        price: -1   },
+      { name: 'IT Consulting',              price: -1   },
+    ],
+    system: 'คุณคือซูโด AI ของ ZUDOGU แพลตฟอร์มอีคอมเมิร์ซสำหรับ SME ไทย ตอบภาษาไทยอย่างมืออาชีพ กระตุ้นให้เห็นคุณค่า\n\nบริการ:\n- Dives Space: เปิดร้านฟรี ไม่มี GP ไม่มีค่าธรรมเนียม\n- ZUDOBOT AI Agent: 999฿/เดือน AI ตอบลูกค้า 24/7\n- Premium: 2,499฿/เดือน ครบทุกฟีเจอร์ + LINE Notify + Analytics\n- Enterprise: ติดต่อสอบถาม Custom Development\n- IT Consulting: ให้คำปรึกษาด้านเทคโนโลยี\n\nติดต่อ: office@zudogu.com\n\nตอบสั้น 2-4 ประโยค เน้นคุณค่าและความแตกต่าง',
+    greet: 'สวัสดีครับ ผมซูโด 🚀 AI ของ ZUDOGU มีคำถามเกี่ยวกับ Dives Space หรือ ZUDOBOT อยากทราบอะไรเลยครับ',
+    quick: ['Dives Space แตกต่างจาก Shopee ยังไง?','ZUDOBOT ราคาเท่าไหร่ คุ้มไหม?','เริ่มต้นสมัครใช้งานยังไง?','รองรับธุรกิจขนาดไหน?'],
+  },
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var state = {
+  storeId: 'fashion',
+  histories:  { fashion:[], perfume:[], garden:[], zudogu:[] },
+  msgCounts:  { fashion:0,  perfume:0,  garden:0,  zudogu:0  },
+  busy: false,
+};
+var MAX_MSGS = 20;
+var MAX_HIST = 10;
+
+/* ============================================================
+   BACKEND DEMO API (key stays server-side — never in the browser)
+   ============================================================ */
+var API_BASE = (window.ZUDOBOT_CONFIG || {}).apiBase || 'https://zudobot.zudogu.com';
+function apiHistory(storeId) {
+  return state.histories[storeId].slice(-MAX_HIST).map(function(m) {
+    return { role: m.role, text: m.parts[0].text };
+  });
+}
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function scrollChat() {
+  var el = document.getElementById('chatMessages');
+  el.scrollTop = el.scrollHeight;
+}
+function renderMsgCount() {
+  var c = state.msgCounts[state.storeId];
+  document.getElementById('msgCount').textContent = c + '/' + MAX_MSGS + ' ข้อความ';
+}
+function addMessage(role, text, typing) {
+  var el     = document.getElementById('chatMessages');
+  var msgDiv = document.createElement('div');
+  msgDiv.className = 'msg msg-' + (role === 'model' ? 'bot' : 'usr');
+  var bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  if (typing) {
+    bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  } else {
+    bubble.innerHTML = text.replace(/\n/g,'<br>');
+  }
+  msgDiv.appendChild(bubble);
+  el.appendChild(msgDiv);
+  scrollChat();
+  return bubble;
+}
+function updateBubble(bubble, text) {
+  bubble.innerHTML = text.replace(/\n/g,'<br>');
+  scrollChat();
+}
+function showQuick() {
+  var store     = STORES[state.storeId];
+  var container = document.getElementById('quickBtns');
+  var shown     = state.histories[state.storeId].length === 0;
+  container.style.display = shown ? 'flex' : 'none';
+  if (!shown) return;
+  container.innerHTML = '';
+  store.quick.forEach(function(q) {
+    var btn = document.createElement('button');
+    btn.className = 'quick-btn';
+    btn.textContent = q;
+    btn.onclick = function() { sendMessage(q); };
+    container.appendChild(btn);
+  });
+}
+
+/* ============================================================
+   STORE SWITCH
+   ============================================================ */
+function setStore(id) {
+  state.storeId = id;
+  var store = STORES[id];
+
+  document.querySelectorAll('.store-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.store === id);
+  });
+
+  document.getElementById('storeNameDisplay').textContent = store.icon + ' ' + store.name;
+  document.getElementById('storeDescDisplay').textContent = store.desc;
+
+  var list = document.getElementById('productsList');
+  list.innerHTML = '';
+  store.products.forEach(function(p) {
+    var row   = document.createElement('div'); row.className = 'prod-item';
+    var name  = document.createElement('span'); name.className = 'prod-name'; name.textContent = p.name;
+    var price = document.createElement('span');
+    if (p.price === -1) {
+      price.className = 'prod-free'; price.textContent = 'ติดต่อสอบถาม';
+    } else if (p.price === 0) {
+      price.className = 'prod-free'; price.textContent = 'ฟรี';
+    } else {
+      price.className = 'prod-price';
+      price.textContent = '฿' + p.price.toLocaleString() + (p.suffix || '');
+    }
+    row.appendChild(name); row.appendChild(price); list.appendChild(row);
+  });
+
+  document.getElementById('botAvatar').textContent    = store.icon;
+  document.getElementById('botNameDisplay').textContent = store.botName;
+  document.getElementById('botRoleDisplay').textContent = store.role;
+
+  renderHistory();
+  showQuick();
+  renderMsgCount();
+}
+
+function renderHistory() {
+  var el    = document.getElementById('chatMessages');
+  var store = STORES[state.storeId];
+  el.innerHTML = '';
+  var greetDiv = document.createElement('div'); greetDiv.className = 'msg msg-bot';
+  var greetB   = document.createElement('div'); greetB.className   = 'msg-bubble';
+  greetB.innerHTML = store.greet.replace(/\n/g,'<br>');
+  greetDiv.appendChild(greetB); el.appendChild(greetDiv);
+  state.histories[state.storeId].forEach(function(m) {
+    var d = document.createElement('div');
+    d.className = 'msg msg-' + (m.role === 'model' ? 'bot' : 'usr');
+    var b = document.createElement('div'); b.className = 'msg-bubble';
+    b.innerHTML = m.parts[0].text.replace(/\n/g,'<br>');
+    d.appendChild(b); el.appendChild(d);
+  });
+  scrollChat();
+}
+
+/* ============================================================
+   SEND MESSAGE
+   ============================================================ */
+function handleSend() {
+  var input = document.getElementById('chatInput');
+  var text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  sendMessage(text);
+}
+
+function sendMessage(text) {
+  if (state.busy) return;
+  if (state.msgCounts[state.storeId] >= MAX_MSGS) {
+    alert('ถึงขีดจำกัด ' + MAX_MSGS + ' ข้อความแล้วค่ะ กรุณาลองใหม่ภายหลัง');
+    return;
+  }
+  document.getElementById('quickBtns').style.display = 'none';
+  addMessage('user', text);
+  state.msgCounts[state.storeId]++;
+  renderMsgCount();
+  state.histories[state.storeId].push({ role:'user', parts:[{ text:text }] });
+
+  state.busy = true;
+  document.getElementById('sendBtn').disabled = true;
+  var botBubble = addMessage('model', '', true);
+
+  doRequest(text, botBubble);
+}
+
+function doRequest(text, bubble) {
+  var storeId = state.storeId;
+  fetch(API_BASE + '/api/landing-demo/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ storeId: storeId, history: apiHistory(storeId), message: text }),
+  }).then(function(res) {
+    if (res.status === 429) {
+      updateBubble(bubble, 'ใช้งานบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่นะครับ 🙏');
+      finishRequest();
+      return;
+    }
+    return res.json().then(function(data) {
+      if (!res.ok || !data || !data.reply) {
+        updateBubble(bubble, '⚠️ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+        finishRequest();
+        return;
+      }
+      updateBubble(bubble, data.reply);
+      state.histories[storeId].push({ role:'model', parts:[{ text:data.reply }] });
+      finishRequest();
+    });
+  }).catch(function() {
+    updateBubble(bubble, '⚠️ ไม่สามารถเชื่อมต่อได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+    finishRequest();
+  });
+}
+
+function finishRequest() {
+  state.busy = false;
+  document.getElementById('sendBtn').disabled = false;
+  scrollChat();
+}
+
+function resetChat() {
+  state.histories[state.storeId] = [];
+  state.msgCounts[state.storeId] = 0;
+  state.busy = false;
+  document.getElementById('sendBtn').disabled = false;
+  renderHistory();
+  showQuick();
+  renderMsgCount();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.getElementById('storeTabs').addEventListener('click', function(e) {
+  var tab = e.target.closest('[data-store]');
+  if (tab) setStore(tab.dataset.store);
+});
+document.getElementById('chatInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+window.addEventListener('scroll', function() {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+});
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('vis'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fu').forEach(function(el) { obs.observe(el); });
+
+setStore('fashion');
+</script>
+</body>
+</html>

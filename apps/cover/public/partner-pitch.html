@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zudobot Partner Program — Pitch Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-deep:    #0B2B6B;
+      --blue-primary: #1E5BC6;
+      --blue-light:   #3B82F6;
+      --blue-soft:    #EFF6FF;
+      --gold-bright:  #F5A623;
+      --gold-deep:    #D4870A;
+      --gold-pale:    #FEF3C7;
+      --white:        #FFFFFF;
+      --gray-100:     #F1F5F9;
+      --gray-200:     #E2E8F0;
+      --gray-500:     #64748B;
+      --gray-700:     #334155;
+      --gray-900:     #0F172A;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sarabun', 'Inter', sans-serif;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 0;
+    }
+
+    /* ── Print: A4 landscape ── */
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .slide { page-break-after: always; box-shadow: none !important; }
+      .slide:last-child { page-break-after: avoid; }
+      .print-btn { display: none !important; }
+    }
+
+    /* ── Slide base ── */
+    .slide {
+      width: 297mm;
+      height: 210mm;
+      background: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header bar (top stripe) ── */
+    .slide-header {
+      height: 6px;
+      background: linear-gradient(90deg, var(--blue-primary) 0%, var(--blue-light) 50%, var(--gold-bright) 100%);
+      flex-shrink: 0;
+    }
+
+    /* ── ZUDOGU watermark top-right ── */
+    .zudogu-badge {
+      position: absolute;
+      top: 14px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+    }
+    .zudogu-z {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, var(--blue-primary), var(--blue-light));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -1px;
+      box-shadow: 0 2px 8px rgba(30,91,198,0.3);
+    }
+    .zudogu-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue-primary);
+      letter-spacing: 1.5px;
+    }
+
+    /* ── Slide number ── */
+    .slide-num {
+      position: absolute;
+      bottom: 12px;
+      right: 20px;
+      font-size: 10px;
+      color: var(--gray-500);
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── URL footer ── */
+    .slide-url {
+      position: absolute;
+      bottom: 12px;
+      left: 20px;
+      font-size: 10px;
+      color: var(--blue-primary);
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+    }
+
+    /* ── Print / download button ── */
+    .print-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, var(--blue-primary), var(--gold-bright));
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(30,91,198,0.5);
+      z-index: 9999;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .print-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(30,91,198,0.6); }
+
+    /* ═══════════════════════════════════════
+       SLIDE 1 — COVER
+    ═══════════════════════════════════════ */
+    #s1 {
+      background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-primary) 60%, #2563EB 100%);
+    }
+    #s1 .slide-header {
+      background: linear-gradient(90deg, var(--gold-bright), var(--gold-deep), var(--gold-bright));
+    }
+    #s1 .zudogu-z { background: rgba(255,255,255,0.15); color: white; }
+    #s1 .zudogu-text { color: rgba(255,255,255,0.8); }
+    #s1 .slide-num, #s1 .slide-url { color: rgba(255,255,255,0.5); }
+
+    .cover-bg-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.06);
+    }
+
+    .cover-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 60px;
+      position: relative;
+      z-index: 2;
+    }
+    .cover-logo-wrap {
+      width: 90px;
+      height: 90px;
+      background: white;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .cover-logo-wrap img { width: 80px; height: 80px; object-fit: contain; }
+
+    .cover-tag {
+      background: rgba(245,166,35,0.2);
+      border: 1px solid rgba(245,166,35,0.5);
+      color: var(--gold-bright);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      font-family: 'Inter', sans-serif;
+    }
+    .cover-title {
+      font-size: 52px;
+      font-weight: 800;
+      color: white;
+      text-align: center;
+      line-height: 1.05;
+      letter-spacing: -1px;
+      font-family: 'Inter', sans-serif;
+    }
+    .cover-title span { color: var(--gold-bright); }
+    .cover-subtitle {
+      font-size: 18px;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.5;
+      max-width: 580px;
+    }
+    .cover-divider {
+      width: 60px;
+      height: 3px;
+      background: var(--gold-bright);
+      border-radius: 2px;
+      margin: 18px auto;
+    }
+    .cover-pills {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .cover-pill {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      font-size: 12px;
+      padding: 5px 16px;
+      border-radius: 20px;
+    }
+
+    /* ═══════════════════════════════════════
+       SLIDE 2 — WHAT IS ZUDOBOT
+    ═══════════════════════════════════════ */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 36px 16px;
+    }
+    .section-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--gold-bright);
+      text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
+      margin-bottom: 6px;
+    }
+    .slide-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--blue-deep);
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+    .slide-title em { color: var(--blue-primary); font-style: normal; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; flex: 1; }
+
+    .card {
+      background: var(--blue-soft);
+      border: 1px solid #DBEAFE;
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card.gold { background: var(--gold-pale); border-color: #FDE68A; }
+    .card.dark { background: var(--blue-deep); border-color: transparent; }
+
+    .card-icon { font-size: 26px; }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--blue-deep); }
+    .card.dark .card-title { color: white; }
+    .card-text { font-size: 12.5px; color: var(--gray-700); line-height: 1.55; }
+    .card.dark .card-text { color: rgba(255,255,255,0.75); }
+
+    .stat-big { font-size: 36px; font-weight: 800; color: var(--blue-primary); font-family: 'Inter', sans-serif; }
+    .stat-big.gold { color: var(--gold-deep); }
+    .stat-label { font-size: 12px; color: var(--gray-500); margin-top: -4px; }
+    .source { font-size: 9.5px; color: var(--gray-500); margin-top: 6px; font-style: italic; }
+
+    /* ═══════════════════════════════════════
+       PRICING TABLE
+    ═══════════════════════════════════════ */
+    .price-table { width: 100%; border-collapse: collapse; }
+    .price-table th {
+      background: var(--blue-primary);
+      color: white;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+    }
+    .price-table th:first-child { border-radius: 10px 0 0 0; }
+    .price-table th:last-child { border-radius: 0 10px 0 0; }
+    .price-table td {
+      padding: 9px 12px;
+      font-size: 12.5px;
+      border-bottom: 1px solid var(--gray-200);
+      vertical-align: middle;
+    }
+    .price-table tr:nth-child(even) td { background: var(--blue-soft); }
+    .price-table .plan-name { font-weight: 700; color: var(--blue-deep); }
+    .price-table .retail { color: var(--blue-primary); font-weight: 600; }
+    .price-table .wholesale { color: var(--gray-700); }
+    .price-table .profit { color: var(--gold-deep); font-weight: 700; }
+    .price-table .profit-pct { font-size: 10px; color: var(--gray-500); }
+
+    .highlight-row td { background: var(--gold-pale) !important; }
+
+    /* Projection table */
+    .proj-table { width: 100%; border-collapse: collapse; }
+    .proj-table th {
+      background: var(--blue-deep);
+      color: white;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+    }
+    .proj-table td {
+      padding: 9px 14px;
+      font-size: 13px;
+      text-align: center;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .proj-table .total-row td {
+      background: var(--blue-primary);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .proj-table tr:nth-child(even) td { background: var(--blue-soft); }
+
+    /* Steps */
+    .step-row { display: flex; gap: 0; flex: 1; }
+    .step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 20px 16px;
+      position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      color: var(--gold-bright);
+      z-index: 2;
+    }
+    .step-num {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--blue-primary), var(--blue-light));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 10px;
+      font-family: 'Inter', sans-serif;
+    }
+    .step-title { font-size: 14px; font-weight: 700; color: var(--blue-deep); margin-bottom: 6px; }
+    .step-text { font-size: 12px; color: var(--gray-700); line-height: 1.5; }
+
+    /* Benefit list */
+    .benefit-list { display: flex; flex-direction: column; gap: 8px; }
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .benefit-icon {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, var(--blue-primary), var(--blue-light));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .benefit-text { font-size: 12.5px; color: var(--gray-700); line-height: 1.5; }
+    .benefit-text strong { color: var(--blue-deep); display: block; font-size: 13px; }
+
+    /* CTA slide */
+    #s12 {
+      background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-primary) 60%, #2563EB 100%);
+    }
+    #s12 .zudogu-z { background: rgba(255,255,255,0.15); color: white; }
+    #s12 .zudogu-text { color: rgba(255,255,255,0.8); }
+    #s12 .slide-num { color: rgba(255,255,255,0.5); }
+    #s12 .slide-url { color: rgba(255,255,255,0.6); }
+
+    .cta-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px 60px;
+      position: relative;
+      z-index: 2;
+    }
+    .cta-title { font-size: 40px; font-weight: 800; color: white; line-height: 1.1; font-family: 'Inter', sans-serif; }
+    .cta-title span { color: var(--gold-bright); }
+    .cta-sub { font-size: 17px; color: rgba(255,255,255,0.75); margin: 14px 0 24px; max-width: 520px; line-height: 1.6; }
+    .cta-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold-bright), var(--gold-deep));
+      color: var(--blue-deep);
+      font-size: 16px;
+      font-weight: 800;
+      padding: 16px 48px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.3px;
+      box-shadow: 0 8px 24px rgba(245,166,35,0.4);
+    }
+    .cta-links { margin-top: 20px; display: flex; gap: 24px; }
+    .cta-link { color: rgba(255,255,255,0.6); font-size: 12px; text-decoration: none; }
+    .cta-link:hover { color: white; }
+
+    /* slide 3 big stats */
+    .stat-card {
+      flex: 1;
+      background: var(--blue-soft);
+      border: 1px solid #DBEAFE;
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-card.gold-bg { background: var(--gold-pale); border-color: #FDE68A; }
+
+    /* income highlight box */
+    .income-box {
+      background: linear-gradient(135deg, var(--blue-primary), var(--blue-deep));
+      border-radius: 14px;
+      padding: 20px 24px;
+      color: white;
+      text-align: center;
+    }
+    .income-number { font-size: 38px; font-weight: 800; color: var(--gold-bright); font-family: 'Inter', sans-serif; }
+    .income-label { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 4px; }
+    .income-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 6px; }
+
+    /* divider line */
+    .h-divider { height: 1px; background: var(--gray-200); margin: 8px 0; }
+
+    /* pill badge */
+    .badge {
+      display: inline-block;
+      background: var(--gold-pale);
+      border: 1px solid #FDE68A;
+      color: var(--gold-deep);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-family: 'Inter', sans-serif;
+    }
+    .badge.blue { background: var(--blue-soft); border-color: #BFDBFE; color: var(--blue-primary); }
+  </style>
+</head>
+<body>
+
+<!-- PRINT BUTTON -->
+<button class="print-btn" onclick="window.print()">🖨️ Download PDF (Print)</button>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 1 — COVER
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="slide-header"></div>
+  <!-- decorative rings -->
+  <div class="cover-bg-ring" style="width:350px;height:350px;bottom:-80px;left:-80px;"></div>
+  <div class="cover-bg-ring" style="width:200px;height:200px;bottom:40px;right:120px;"></div>
+  <div class="cover-bg-ring" style="width:500px;height:500px;top:-200px;right:-200px;"></div>
+
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="cover-content">
+    <div class="cover-logo-wrap">
+      <img src="/logo.png" alt="Zudobot">
+    </div>
+    <div class="cover-tag">PARTNER PROGRAM 2025</div>
+    <div class="cover-title">ZUDOBOT<br><span>Partner Pitch Deck</span></div>
+    <div class="cover-divider"></div>
+    <div class="cover-subtitle">
+      เพิ่มรายได้ประจำให้ธุรกิจของคุณ ด้วย AI Chatbot สำหรับร้านค้าออนไลน์<br>
+      สร้างรายได้ <strong style="color:var(--gold-bright)">Recurring Revenue</strong> จากลูกค้าทุกราย
+    </div>
+    <div class="cover-pills">
+      <span class="cover-pill">🤖 AI-Powered</span>
+      <span class="cover-pill">💰 Revenue Share</span>
+      <span class="cover-pill">📊 Real-time Dashboard</span>
+      <span class="cover-pill">🔗 Stripe Connect</span>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">1 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 2 — WHAT IS ZUDOBOT
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">INTRODUCTION</div>
+    <div class="slide-title">Zudobot คืออะไร?</div>
+
+    <div class="two-col">
+      <!-- Left: description -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card" style="flex:0">
+          <div class="card-icon">🤖</div>
+          <div class="card-title">AI Chatbot สำหรับร้านค้าออนไลน์</div>
+          <div class="card-text">
+            Zudobot คือแพลตฟอร์ม AI Chatbot ที่พัฒนาโดย <strong>Zudogu Co., Ltd.</strong> เพื่อช่วยให้ร้านค้าออนไลน์สามารถ
+            ตอบคำถามลูกค้าได้อัตโนมัติ 24/7 โดยไม่ต้องใช้พนักงาน
+          </div>
+        </div>
+        <div class="card" style="flex:0">
+          <div class="card-icon">💡</div>
+          <div class="card-title">ทำไม Zudobot ถึงเกิดขึ้น?</div>
+          <div class="card-text">
+            เจ้าของร้านค้าออนไลน์ใช้เวลา <strong>3–5 ชั่วโมงต่อวัน</strong> ตอบคำถามซ้ำๆ เช่น
+            "สินค้ามีสีอะไรบ้าง?" "ส่งกี่วัน?" "คืนสินค้าได้ไหม?"
+            Zudobot ตอบแทนได้ทันที ด้วย AI ที่เรียนรู้ข้อมูลของร้านโดยเฉพาะ
+          </div>
+        </div>
+        <div class="card" style="flex:0">
+          <div class="card-icon">🔌</div>
+          <div class="card-title">ติดตั้งง่าย 1 บรรทัด</div>
+          <div class="card-text">
+            Embed ด้วย JavaScript snippet เพียง 1 บรรทัด ทำงานได้บนเว็บไซต์ทุกประเภท
+            — WordPress, Wix, custom HTML, หรือ Next.js
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: key features grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;">
+        <div class="card" style="align-items:center;text-align:center;">
+          <div style="font-size:28px;">⚡</div>
+          <div class="card-title" style="text-align:center;">ตอบทันที</div>
+          <div class="card-text" style="text-align:center;font-size:11.5px;">ไม่ต้องรอ ไม่มีเวลาทำการ</div>
+        </div>
+        <div class="card" style="align-items:center;text-align:center;">
+          <div style="font-size:28px;">🧠</div>
+          <div class="card-title" style="text-align:center;">Gemini AI</div>
+          <div class="card-text" style="text-align:center;font-size:11.5px;">ขับเคลื่อนด้วย Google Gemini</div>
+        </div>
+        <div class="card" style="align-items:center;text-align:center;">
+          <div style="font-size:28px;">📦</div>
+          <div class="card-title" style="text-align:center;">ฝึกด้วยข้อมูลร้าน</div>
+          <div class="card-text" style="text-align:center;font-size:11.5px;">อัพโหลดสินค้า FAQ นโยบาย</div>
+        </div>
+        <div class="card" style="align-items:center;text-align:center;">
+          <div style="font-size:28px;">📊</div>
+          <div class="card-title" style="text-align:center;">Analytics</div>
+          <div class="card-text" style="text-align:center;font-size:11.5px;">ติดตาม Conversation ทุก Session</div>
+        </div>
+        <div class="card" style="align-items:center;text-align:center;">
+          <div style="font-size:28px;">🌍</div>
+          <div class="card-title" style="text-align:center;">หลายภาษา</div>
+          <div class="card-text" style="text-align:center;font-size:11.5px;">ไทย, อังกฤษ และอื่นๆ</div>
+        </div>
+        <div class="card" style="align-items:center;text-align:center;">
+          <div style="font-size:28px;">💳</div>
+          <div class="card-title" style="text-align:center;">จ่ายรายเดือน</div>
+          <div class="card-text" style="text-align:center;font-size:11.5px;">Subscription — ยกเลิกได้ตลอด</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">2 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 3 — MARKET OPPORTUNITY (DATA)
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">MARKET OPPORTUNITY</div>
+    <div class="slide-title">ตลาด AI Chatbot กำลังเติบโตอย่างรวดเร็ว</div>
+
+    <div class="three-col">
+      <div class="stat-card">
+        <div class="stat-big">$15.5B</div>
+        <div class="stat-label">มูลค่าตลาด AI Chatbot โลก ปี 2023</div>
+        <div class="h-divider"></div>
+        <div class="card-text" style="font-size:12px;">คาดเติบโตเป็น <strong>$66.6B ภายในปี 2028</strong> (CAGR 34.8%)</div>
+        <div class="source">Source: MarketsandMarkets, 2023</div>
+      </div>
+
+      <div class="stat-card gold-bg">
+        <div class="stat-big gold">67%</div>
+        <div class="stat-label">ผู้บริโภคทั่วโลกเคยใช้ Chatbot ในปี 2024</div>
+        <div class="h-divider"></div>
+        <div class="card-text" style="font-size:12px;">และ <strong>87.2%</strong> มีประสบการณ์กลาง-บวก กับ Chatbot</div>
+        <div class="source">Source: Tidio Customer Service Report, 2024</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-big">80%</div>
+        <div class="stat-label">ของธุรกิจวางแผนใช้ Chatbot ภายในปี 2025</div>
+        <div class="h-divider"></div>
+        <div class="card-text" style="font-size:12px;">ตลาดไทย e-commerce เติบโต <strong>฿900B+</strong> ต่อปี</div>
+        <div class="source">Source: Outgrow, 2024 / ETDA Thailand 2023</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;" class="three-col">
+      <div class="stat-card" style="flex-direction:row;align-items:center;gap:14px;">
+        <div style="font-size:28px;">⏰</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--blue-primary);font-family:'Inter',sans-serif;">2.5B</div>
+          <div style="font-size:11.5px;color:var(--gray-700);">ชั่วโมงงานที่ Chatbot ช่วยประหยัดต่อปี</div>
+          <div class="source">Juniper Research, 2023</div>
+        </div>
+      </div>
+      <div class="stat-card gold-bg" style="flex-direction:row;align-items:center;gap:14px;">
+        <div style="font-size:28px;">📈</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--gold-deep);font-family:'Inter',sans-serif;">+35%</div>
+          <div style="font-size:11.5px;color:var(--gray-700);">อัตรา Conversion เพิ่มขึ้นเมื่อมี Chatbot บนเว็บ</div>
+          <div class="source">Drift/HubSpot Conversational Marketing Report, 2023</div>
+        </div>
+      </div>
+      <div class="stat-card" style="flex-direction:row;align-items:center;gap:14px;">
+        <div style="font-size:28px;">💰</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--blue-primary);font-family:'Inter',sans-serif;">30%</div>
+          <div style="font-size:11.5px;color:var(--gray-700);">ลดต้นทุน Customer Support ด้วย Chatbot</div>
+          <div class="source">IBM Watson, 2024</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">3 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 4 — CUSTOMER BENEFITS (RESEARCH-BACKED)
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">CUSTOMER VALUE</div>
+    <div class="slide-title">ลูกค้าของคุณได้อะไรจาก <em>Zudobot</em>?</div>
+
+    <div class="two-col">
+      <!-- Left benefits list -->
+      <div class="benefit-list">
+        <div class="benefit-item">
+          <div class="benefit-icon">⚡</div>
+          <div class="benefit-text">
+            <strong>ตอบคำถามทันที — ไม่ต้องรอ</strong>
+            ลูกค้าออนไลน์ 53% ละทิ้งการซื้อหากต้องรอตอบนานกว่า 3 นาที
+            Zudobot ตอบได้ใน &lt;1 วินาที ตลอด 24 ชั่วโมง
+            <div class="source">Source: Forrester Research — "Time is Money: Why Speed Matters", 2023</div>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">💬</div>
+          <div class="benefit-text">
+            <strong>เพิ่ม Conversion Rate</strong>
+            การมี Live Chat / Chatbot บนเว็บเพิ่ม Conversion ได้ 20–45%
+            โดยเฉพาะในช่วง "ตัดสินใจซื้อ" ที่ลูกค้าต้องการข้อมูลเพิ่มเติม
+            <div class="source">Source: Intercom "Customer Engagement Report", 2023</div>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">🔁</div>
+          <div class="benefit-text">
+            <strong>เพิ่มอัตราลูกค้าซื้อซ้ำ</strong>
+            ลูกค้าที่ได้รับประสบการณ์ที่ดีมีแนวโน้มซื้อซ้ำ 5 เท่า
+            Chatbot ช่วยให้ประสบการณ์สม่ำเสมอทุก Session
+            <div class="source">Source: Bain & Company "Customer Experience Research", 2022</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right stats cards -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="text-align:center;flex-direction:row;gap:16px;align-items:center;">
+          <div style="flex:1;text-align:center;">
+            <div class="stat-big" style="font-size:32px;">80%</div>
+            <div class="stat-label">คำถามทั่วไปที่ Chatbot<br>ตอบได้โดยไม่ต้องมีพนักงาน</div>
+            <div class="source" style="text-align:center;">IBM Global AI Report, 2024</div>
+          </div>
+          <div style="width:1px;height:60px;background:var(--gray-200);"></div>
+          <div style="flex:1;text-align:center;">
+            <div class="stat-big" style="font-size:32px;color:var(--gold-deep);">89%</div>
+            <div class="stat-label">ลูกค้าคาดหวัง<br>Response ทันที 24/7</div>
+            <div class="source" style="text-align:center;">Salesforce "State of Service", 2024</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🛒</div>
+          <div class="card-title">ลด Cart Abandonment</div>
+          <div class="card-text">
+            Cart Abandonment Rate เฉลี่ย 69.8% — ส่วนใหญ่เกิดจากคำถามที่ไม่ได้รับคำตอบ
+            Chatbot ที่ช่วยตอบในขณะลูกค้ากำลังตัดสินใจ ลด Abandonment ได้ 20–30%
+          </div>
+          <div class="source">Source: Baymard Institute Cart Abandonment Research, 2024 / Tidio, 2023</div>
+        </div>
+
+        <div class="card gold">
+          <div class="card-icon">⭐</div>
+          <div class="card-title">เพิ่มความพึงพอใจลูกค้า (CSAT)</div>
+          <div class="card-text">
+            ธุรกิจที่ใช้ AI Chatbot มี Customer Satisfaction Score สูงกว่าค่าเฉลี่ยอุตสาหกรรม 12%
+            โดยเฉพาะในด้านความรวดเร็วและความพร้อมให้บริการ
+          </div>
+          <div class="source">Source: Zendesk Customer Experience Trends Report, 2024</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">4 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 5 — PARTNER BENEFITS
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">PARTNER BENEFITS</div>
+    <div class="slide-title">ทำไมบริษัทซอฟต์แวร์และ Freelancer ถึงเลือก <em>Zudobot</em>?</div>
+
+    <div class="three-col">
+      <div class="card" style="background:linear-gradient(135deg,var(--blue-deep),var(--blue-primary));border:none;">
+        <div class="card-icon">💰</div>
+        <div class="card-title" style="color:white;font-size:15px;">Recurring Revenue</div>
+        <div class="card-text" style="color:rgba(255,255,255,0.8);">
+          ทุกครั้งที่ลูกค้าจ่ายค่าบริการรายเดือน คุณได้รับส่วนต่างกำไรทันที
+          โดยอัตโนมัติผ่าน <strong style="color:var(--gold-bright);">Stripe Connect</strong>
+          — ไม่ต้องรอ ไม่ต้องออกใบแจ้งหนี้เอง
+        </div>
+        <div style="background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.4);border-radius:8px;padding:10px;margin-top:6px;text-align:center;">
+          <div style="font-size:20px;font-weight:800;color:var(--gold-bright);font-family:'Inter',sans-serif;">฿445–฿6,745<span style="font-size:12px;">/เดือน/ลูกค้า</span></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">กำไรส่วนต่างตามแพ็กเกจ</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">เพิ่มมูลค่า Project</div>
+        <div class="card-text">
+          เพิ่ม AI Chatbot เป็น Feature ใน Package การทำเว็บ ช่วยให้คุณเสนอราคาได้สูงขึ้น
+          และสร้าง <strong>ความแตกต่าง</strong> จากคู่แข่งที่ยังทำแค่ Static Website
+        </div>
+        <div style="background:var(--blue-soft);border-radius:8px;padding:8px 10px;margin-top:6px;">
+          <div style="font-size:12px;color:var(--blue-primary);font-weight:700;">Website + Chatbot</div>
+          <div style="font-size:11.5px;color:var(--gray-700);">= Premium Package ที่ลูกค้ายอมจ่ายมากขึ้น</div>
+        </div>
+      </div>
+
+      <div class="card gold">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Dashboard ติดตามรายได้</div>
+        <div class="card-text">
+          Partner Dashboard แสดงข้อมูล Real-time ทั้งหมด:
+          จำนวนลูกค้า, รายได้สะสม, สถานะ Subscription ของแต่ละลูกค้า
+          และประวัติการโอนเงิน
+        </div>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-top:12px;">
+      <div class="benefit-item" style="border:1px solid var(--gray-200);">
+        <div class="benefit-icon" style="background:linear-gradient(135deg,#059669,#10B981);">🔧</div>
+        <div class="benefit-text">
+          <strong>ไม่ต้องพัฒนา AI เอง</strong>
+          ประหยัดเวลาพัฒนาหลายเดือน ใช้ Zudobot เป็น White-label solution ได้เลย
+        </div>
+      </div>
+      <div class="benefit-item" style="border:1px solid var(--gray-200);">
+        <div class="benefit-icon" style="background:linear-gradient(135deg,#7C3AED,#A78BFA);">🎯</div>
+        <div class="benefit-text">
+          <strong>ลูกค้า Stickier</strong>
+          เมื่อลูกค้าติดตั้ง Chatbot บนเว็บแล้ว โอกาสเปลี่ยน Developer ลดลง — รักษาความสัมพันธ์ได้ยาวขึ้น
+        </div>
+      </div>
+      <div class="benefit-item" style="border:1px solid var(--gray-200);">
+        <div class="benefit-icon" style="background:linear-gradient(135deg,#DC2626,#F87171);">💼</div>
+        <div class="benefit-text">
+          <strong>รับเงินอัตโนมัติ</strong>
+          Stripe Connect โอนส่วนต่างเข้าบัญชีคุณทุกครั้งที่ลูกค้าชำระ — ไม่ต้องดำเนินการเพิ่ม
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">5 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 6 — PRICING TABLE
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">PRICING STRUCTURE</div>
+    <div class="slide-title">โครงสร้างราคา — <em>ราคาพาร์ทเนอร์ vs ราคาปลีก</em></div>
+
+    <div class="two-col">
+      <!-- Pricing Table -->
+      <div style="flex:1.4;">
+        <table class="price-table">
+          <thead>
+            <tr>
+              <th>แพ็กเกจ</th>
+              <th>ข้อความ/เดือน</th>
+              <th>ราคาปลีก<br><span style="font-size:10px;font-weight:400;">(ลูกค้าจ่าย)</span></th>
+              <th>ราคาพาร์ทเนอร์<br><span style="font-size:10px;font-weight:400;">(คุณจ่าย)</span></th>
+              <th>กำไรส่วนต่าง<br><span style="font-size:10px;font-weight:400;">/เดือน</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="plan-name">🌱 Starter</span></td>
+              <td>2,000 msg</td>
+              <td class="retail">฿990</td>
+              <td class="wholesale">฿545</td>
+              <td class="profit">฿445 <span class="profit-pct">(45%)</span></td>
+            </tr>
+            <tr class="highlight-row">
+              <td><span class="plan-name">⭐ Pro</span> <span class="badge">Popular</span></td>
+              <td>5,000 msg</td>
+              <td class="retail">฿1,990</td>
+              <td class="wholesale">฿1,095</td>
+              <td class="profit">฿895 <span class="profit-pct">(45%)</span></td>
+            </tr>
+            <tr>
+              <td><span class="plan-name">👑 Master</span></td>
+              <td>20,000 msg</td>
+              <td class="retail">฿14,990</td>
+              <td class="wholesale">฿8,245</td>
+              <td class="profit">฿6,745 <span class="profit-pct">(45%)</span></td>
+            </tr>
+            <tr style="background:var(--gray-100);">
+              <td colspan="5" style="padding:6px 12px;font-size:11px;color:var(--gray-500);">
+                <strong>Add-ons :</strong> &nbsp; Quota +1K msg ฿249 (พาร์ทเนอร์ ฿137) &nbsp;|&nbsp; +5K msg ฿690 (฿380) &nbsp;|&nbsp; +20K msg ฿2,290 (฿1,260)
+              </td>
+            </tr>
+            <tr style="background:var(--gray-100);">
+              <td colspan="5" style="padding:6px 12px;font-size:11px;color:var(--gray-500);">
+                <strong>Retention :</strong> &nbsp; 30 วัน ฿349 (฿192) &nbsp;|&nbsp; 90 วัน ฿790 (฿435) &nbsp;|&nbsp; ตลอดกาล — ติดต่อทีมงาน
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:8px;font-size:11px;color:var(--gray-500);">
+          * ราคาทุกแพ็กเกจเรียกเก็บรายเดือน (Monthly) • พาร์ทเนอร์กำหนดราคาขายลูกค้าได้เอง — กำไรขั้นต่ำตามตาราง
+        </div>
+      </div>
+
+      <!-- Margin explanation -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="income-box">
+          <div class="income-number">~45%</div>
+          <div class="income-label">อัตรากำไรขั้นต้น (Gross Margin)</div>
+          <div class="income-sub">ทุกแพ็กเกจ ทุกเดือน</div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🔁</div>
+          <div class="card-title">รายได้ Recurring</div>
+          <div class="card-text">
+            Subscription รายเดือน — ลูกค้าต่ออายุเอง คุณรับเงินทุกเดือนโดยไม่ต้องทำงานเพิ่ม
+            ตราบใดที่ลูกค้ายังใช้งาน Chatbot อยู่
+          </div>
+        </div>
+
+        <div class="card gold">
+          <div class="card-icon">💡</div>
+          <div class="card-title">ตั้งราคาเองได้</div>
+          <div class="card-text">
+            คุณสามารถขายลูกค้าในราคาใดก็ได้ที่สูงกว่าราคาพาร์ทเนอร์
+            ส่วนต่างทั้งหมดเป็นของคุณ — Zudobot เก็บเฉพาะราคาพาร์ทเนอร์
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">6 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 7 — REVENUE PROJECTION (10 clients × 12 months)
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">REVENUE PROJECTION</div>
+    <div class="slide-title">Projection: <em>10 ลูกค้า × 12 เดือน</em></div>
+
+    <div class="two-col">
+      <!-- Projection table -->
+      <div>
+        <table class="proj-table">
+          <thead>
+            <tr>
+              <th>แพ็กเกจ</th>
+              <th>ลูกค้า</th>
+              <th>ราคาปลีก/เดือน</th>
+              <th>กำไร/เดือน</th>
+              <th>กำไร/ปี</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>🌱 Starter</td>
+              <td>3</td>
+              <td>฿990 × 3 = ฿2,970</td>
+              <td><strong>฿1,335</strong></td>
+              <td><strong>฿16,020</strong></td>
+            </tr>
+            <tr>
+              <td>⭐ Pro</td>
+              <td>5</td>
+              <td>฿1,990 × 5 = ฿9,950</td>
+              <td><strong>฿4,475</strong></td>
+              <td><strong>฿53,700</strong></td>
+            </tr>
+            <tr>
+              <td>👑 Master</td>
+              <td>2</td>
+              <td>฿14,990 × 2 = ฿29,980</td>
+              <td><strong>฿13,490</strong></td>
+              <td><strong>฿161,880</strong></td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="2"><strong>รวม 10 ลูกค้า</strong></td>
+              <td>฿42,900/เดือน</td>
+              <td>฿19,300/เดือน</td>
+              <td>฿231,600/ปี</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:8px;font-size:11px;color:var(--gray-500);">
+          * คำนวณจากกำไรส่วนต่างราคาปลีก – ราคาพาร์ทเนอร์ ยังไม่รวม Add-ons
+        </div>
+      </div>
+
+      <!-- Highlight boxes -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="income-box">
+          <div class="income-number">฿231,600</div>
+          <div class="income-label">รายได้ Recurring ต่อปี</div>
+          <div class="income-sub">จากลูกค้าเพียง 10 ราย — ไม่ต้องหาลูกค้าใหม่</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="card" style="text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--blue-primary);font-family:'Inter',sans-serif;">฿19,300</div>
+            <div style="font-size:11.5px;color:var(--gray-700);margin-top:4px;">กำไรต่อเดือน</div>
+          </div>
+          <div class="card gold" style="text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--gold-deep);font-family:'Inter',sans-serif;">45%</div>
+            <div style="font-size:11.5px;color:var(--gray-700);margin-top:4px;">อัตรากำไรเฉลี่ย</div>
+          </div>
+          <div class="card" style="text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--blue-primary);font-family:'Inter',sans-serif;">+฿0</div>
+            <div style="font-size:11.5px;color:var(--gray-700);margin-top:4px;">ต้นทุนเพิ่มเติมหลังติดตั้ง</div>
+          </div>
+          <div class="card gold" style="text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--gold-deep);font-family:'Inter',sans-serif;">∞</div>
+            <div style="font-size:11.5px;color:var(--gray-700);margin-top:4px;">ระยะเวลารับเงิน (ตลอดสัญญา)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">7 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 8 — RECURRING REVENUE POWER
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">RECURRING REVENUE</div>
+    <div class="slide-title">พลังของ <em>Recurring Income</em> — ทำครั้งเดียว รับตลอด</div>
+
+    <div class="two-col">
+      <!-- Left: comparison -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:var(--gray-100);border:1px solid var(--gray-200);border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:14px;font-weight:700;color:var(--gray-700);margin-bottom:8px;">💼 โมเดลเดิม</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;">
+              ทำเว็บไซต์ให้ลูกค้า<br>
+              รับเงิน <strong>ครั้งเดียว</strong><br>
+              ฿15,000–฿50,000<br>
+              ต้องหาลูกค้าใหม่ตลอด
+            </div>
+          </div>
+          <div style="background:linear-gradient(135deg,var(--blue-primary),var(--blue-deep));border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:14px;font-weight:700;color:var(--gold-bright);margin-bottom:8px;">🚀 โมเดลใหม่ + Zudobot</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.8);line-height:1.6;">
+              ทำเว็บ + ติดตั้ง Chatbot<br>
+              รับเงิน <strong style="color:var(--gold-bright);">ทุกเดือน</strong><br>
+              ฿445–฿6,745/เดือน/ลูกค้า<br>
+              รายได้สะสมขึ้นเรื่อยๆ
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--blue-soft);border:1px solid #DBEAFE;border-radius:12px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-deep);margin-bottom:8px;">📈 ตัวอย่างการสะสมรายได้ (Pro Plan ฿895/เดือน/ลูกค้า)</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;">
+            <div>
+              <div style="font-size:18px;font-weight:800;color:var(--blue-primary);font-family:'Inter',sans-serif;">฿895</div>
+              <div style="font-size:10px;color:var(--gray-500);">เดือน 1</div>
+            </div>
+            <div>
+              <div style="font-size:18px;font-weight:800;color:var(--blue-primary);font-family:'Inter',sans-serif;">฿5,370</div>
+              <div style="font-size:10px;color:var(--gray-500);">เดือน 6</div>
+            </div>
+            <div>
+              <div style="font-size:18px;font-weight:800;color:var(--blue-primary);font-family:'Inter',sans-serif;">฿10,740</div>
+              <div style="font-size:10px;color:var(--gray-500);">เดือน 12</div>
+            </div>
+            <div>
+              <div style="font-size:18px;font-weight:800;color:var(--gold-deep);font-family:'Inter',sans-serif;">฿32,220</div>
+              <div style="font-size:10px;color:var(--gray-500);">เดือน 36</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: why recurring matters -->
+      <div class="benefit-list">
+        <div style="font-size:13px;font-weight:700;color:var(--blue-deep);margin-bottom:4px;">ทำไม Recurring Revenue ถึงสำคัญมาก?</div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:linear-gradient(135deg,#059669,#10B981);">📅</div>
+          <div class="benefit-text">
+            <strong>รายได้คาดการณ์ได้</strong>
+            ไม่ต้องลุ้นว่าเดือนนี้จะมีลูกค้าใหม่หรือไม่ — รายได้ Base ของคุณเพิ่มขึ้นทุกเดือน
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:linear-gradient(135deg,#7C3AED,#A78BFA);">🔒</div>
+          <div class="benefit-text">
+            <strong>ลูกค้ายึดติด (Sticky)</strong>
+            หลังจากลูกค้าเทรน Bot ด้วยข้อมูลของตัวเองแล้ว โอกาสเปลี่ยนไปใช้คู่แข่งต่ำมาก
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:linear-gradient(135deg,var(--gold-deep),var(--gold-bright);">🏢</div>
+          <div class="benefit-text">
+            <strong>เพิ่มมูลค่าธุรกิจของคุณ</strong>
+            บริษัทที่มี MRR (Monthly Recurring Revenue) มีมูลค่าสูงกว่า Project-based 3–5 เท่า
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">⚙️</div>
+          <div class="benefit-text">
+            <strong>Passive Income จริง</strong>
+            หลังติดตั้งเสร็จ Zudobot ทำงานอัตโนมัติ — คุณรับเงินโดยไม่ต้องทำอะไรเพิ่ม
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">8 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 9 — HOW IT WORKS (3 STEPS)
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">HOW IT WORKS</div>
+    <div class="slide-title">เริ่มต้นได้ใน <em>3 ขั้นตอน</em></div>
+
+    <div class="step-row" style="flex:1;margin-bottom:12px;">
+      <div class="step" style="background:var(--blue-soft);border-radius:14px;">
+        <div class="step-num">1</div>
+        <div class="step-title">สมัครเป็น Partner</div>
+        <div class="step-text">
+          รับ Invite จากทีม Zudobot<br>
+          สร้างบัญชีผ่าน Google Login<br>
+          เชื่อมต่อ Stripe รับเงิน<br><br>
+          <span style="color:var(--blue-primary);font-weight:600;">⏱ ใช้เวลาไม่ถึง 10 นาที</span>
+        </div>
+      </div>
+      <div class="step" style="background:var(--gold-pale);border-radius:14px;">
+        <div class="step-num" style="background:linear-gradient(135deg,var(--gold-deep),var(--gold-bright));">2</div>
+        <div class="step-title">เชิญลูกค้าสมัครใช้งาน</div>
+        <div class="step-text">
+          ใช้ Partner Link พิเศษเชิญลูกค้า<br>
+          ลูกค้าเลือกแพ็กเกจและชำระเงิน<br>
+          ระบบเชื่อมโยงกับบัญชี Partner คุณ<br><br>
+          <span style="color:var(--gold-deep);font-weight:600;">🔗 ลิงก์ติดตาม Auto-assign</span>
+        </div>
+      </div>
+      <div class="step" style="background:linear-gradient(135deg,var(--blue-primary),var(--blue-deep));border-radius:14px;">
+        <div class="step-num" style="background:rgba(245,166,35,0.3);border:2px solid var(--gold-bright);">3</div>
+        <div class="step-title" style="color:white;">รับเงินอัตโนมัติ</div>
+        <div class="step-text" style="color:rgba(255,255,255,0.8);">
+          ทุกเดือนที่ลูกค้าจ่ายค่าบริการ<br>
+          Stripe โอนส่วนต่างเข้าบัญชีคุณ<br>
+          Dashboard แสดงยอดทั้งหมด<br><br>
+          <span style="color:var(--gold-bright);font-weight:600;">💰 ไม่ต้องทำอะไรเพิ่ม</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--blue-soft);border:1px solid #DBEAFE;border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:20px;">
+      <div style="font-size:28px;">💡</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--blue-deep);">Partner Dashboard ให้คุณ:</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;">
+          <div style="font-size:12px;color:var(--gray-700);">✓ ดูรายชื่อลูกค้าทั้งหมด</div>
+          <div style="font-size:12px;color:var(--gray-700);">✓ ติดตามสถานะ Subscription</div>
+          <div style="font-size:12px;color:var(--gray-700);">✓ ดูรายได้สะสมแบบ Real-time</div>
+          <div style="font-size:12px;color:var(--gray-700);">✓ ประวัติการโอนเงินทั้งหมด</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">9 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 10 — WHY PARTNER WITH ZUDOBOT (FOR DEVS)
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">WHY ZUDOBOT</div>
+    <div class="slide-title">เหตุผลที่ <em>Developer & Agency</em> เลือก Zudobot</div>
+
+    <div class="two-col">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="flex-direction:row;align-items:flex-start;gap:12px;">
+          <div style="font-size:24px;flex-shrink:0;">🏗️</div>
+          <div>
+            <div class="card-title">Infrastructure พร้อมใช้</div>
+            <div class="card-text">
+              คุณไม่ต้องสร้าง AI Pipeline, Vector Database, หรือ Chat UI เอง
+              Zudobot ให้ทุกอย่างพร้อมใช้ — คุณแค่ embed 1 บรรทัดก็เสร็จ
+            </div>
+          </div>
+        </div>
+        <div class="card" style="flex-direction:row;align-items:flex-start;gap:12px;">
+          <div style="font-size:24px;flex-shrink:0;">🔄</div>
+          <div>
+            <div class="card-title">ต่อยอดลูกค้าเดิม</div>
+            <div class="card-text">
+              นำเสนอ Zudobot ให้ลูกค้าเว็บเดิมของคุณ — ไม่ต้องหาลูกค้าใหม่
+              ลูกค้าที่มีเว็บแล้วคือ Target ที่ดีที่สุด เพราะคุณมี Trust อยู่แล้ว
+            </div>
+          </div>
+        </div>
+        <div class="card" style="flex-direction:row;align-items:flex-start;gap:12px;">
+          <div style="font-size:24px;flex-shrink:0;">🛡️</div>
+          <div>
+            <div class="card-title">ความน่าเชื่อถือสูง</div>
+            <div class="card-text">
+              ขับเคลื่อนด้วย Google Gemini AI — ลูกค้าไว้วางใจเทคโนโลยีของ Google
+              คุณนำเสนอ Solution ที่มี Brand ระดับโลกหนุนหลัง
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="flex-direction:row;align-items:flex-start;gap:12px;">
+          <div style="font-size:24px;flex-shrink:0;">📱</div>
+          <div>
+            <div class="card-title">รองรับทุก Platform</div>
+            <div class="card-text">
+              WordPress, Shopify, WooCommerce, Wix, Next.js, หรือ HTML ธรรมดา
+              — ติดตั้งได้ทุกที่ใน 5 นาที ไม่ต้องแก้ Backend
+            </div>
+          </div>
+        </div>
+        <div class="card gold" style="flex-direction:row;align-items:flex-start;gap:12px;">
+          <div style="font-size:24px;flex-shrink:0;">💼</div>
+          <div>
+            <div class="card-title">เพิ่มมูลค่า Package ของคุณ</div>
+            <div class="card-text">
+              "Website + AI Chatbot" = Premium Package ที่คุณสามารถตั้งราคาสูงขึ้น
+              ลูกค้าเห็น Value ชัดเจน พร้อมจ่ายมากขึ้น
+            </div>
+          </div>
+        </div>
+        <div class="card" style="flex-direction:row;align-items:flex-start;gap:12px;">
+          <div style="font-size:24px;flex-shrink:0;">📞</div>
+          <div>
+            <div class="card-title">Support จากทีม Zudobot</div>
+            <div class="card-text">
+              พาร์ทเนอร์ทุกรายได้รับการ Support จากทีม Zudobot โดยตรง
+              ทั้งด้านเทคนิคและการขาย — คุณไม่ต้องรับมือคนเดียว
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">10 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 11 — FAQ / OBJECTIONS
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s11">
+  <div class="slide-header"></div>
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="slide-body">
+    <div class="section-tag">FAQ</div>
+    <div class="slide-title">คำถามที่พบบ่อย</div>
+
+    <div class="two-col">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--blue-soft);border-radius:12px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-deep);margin-bottom:5px;">❓ ต้องมีความรู้ AI ไหม?</div>
+          <div style="font-size:12.5px;color:var(--gray-700);line-height:1.55;">
+            ไม่ต้องเลย Zudobot จัดการทุกอย่างให้ คุณแค่ติดตั้งและแนะนำลูกค้าให้ Upload ข้อมูลสินค้า
+            UI ใช้งานง่าย ลูกค้าทำเองได้ไม่ต้องพึ่งพา Developer
+          </div>
+        </div>
+        <div style="background:var(--blue-soft);border-radius:12px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-deep);margin-bottom:5px;">❓ ถ้าลูกค้ายกเลิก Partner ได้เงินต่อไหม?</div>
+          <div style="font-size:12.5px;color:var(--gray-700);line-height:1.55;">
+            ไม่ — รายได้จะหยุดเมื่อลูกค้าหยุดจ่าย แต่จากข้อมูลพบว่า Churn Rate ของ SaaS Chatbot
+            เฉลี่ยต่ำกว่า 5% ต่อเดือน เพราะลูกค้าเทรน Bot ด้วยข้อมูลของตัวเองแล้ว
+          </div>
+        </div>
+        <div style="background:var(--blue-soft);border-radius:12px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-deep);margin-bottom:5px;">❓ ต้องดูแล Server หรือ AI Model เองไหม?</div>
+          <div style="font-size:12.5px;color:var(--gray-700);line-height:1.55;">
+            ไม่ต้องทั้งหมด Zudobot ดูแล Infrastructure ให้ทั้งหมด — Server, AI Model Update, Scaling
+            คุณและลูกค้าไม่มีภาระเพิ่ม
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--gold-pale);border-radius:12px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:5px;">❓ ลูกค้าต้องเทรน Bot ยากไหม?</div>
+          <div style="font-size:12.5px;color:var(--gray-700);line-height:1.55;">
+            ง่ายมาก — Upload ไฟล์สินค้า, FAQ, หรือวางข้อความโดยตรง
+            Bot เรียนรู้อัตโนมัติ ไม่ต้องเขียน Code หรือมีความรู้ IT
+          </div>
+        </div>
+        <div style="background:var(--gold-pale);border-radius:12px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:5px;">❓ รับเงินผ่านช่องทางไหน?</div>
+          <div style="font-size:12.5px;color:var(--gray-700);line-height:1.55;">
+            ผ่าน Stripe Connect โอนตรงเข้าบัญชีธนาคารของคุณ (รองรับบัญชีไทย)
+            ไม่มีขั้นตอนยุ่งยาก ไม่ต้องออกใบแจ้งหนี้เอง
+          </div>
+        </div>
+        <div style="background:linear-gradient(135deg,var(--blue-primary),var(--blue-deep));border-radius:12px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--gold-bright);margin-bottom:5px;">❓ สมัครเป็น Partner ทำอย่างไร?</div>
+          <div style="font-size:12.5px;color:rgba(255,255,255,0.8);line-height:1.55;">
+            ติดต่อทีม Zudobot เพื่อรับ Invitation Link
+            จากนั้นสมัครผ่าน Google Login และเชื่อมต่อ Stripe
+            กระบวนการทั้งหมดใช้เวลาไม่ถึง 15 นาที
+          </div>
+          <div style="margin-top:8px;">
+            <a href="https://zudobot.zudogu.com" style="color:var(--gold-bright);font-weight:700;font-size:13px;text-decoration:none;">
+              → zudobot.zudogu.com
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="slide-url">zudobot.zudogu.com</span>
+  <span class="slide-num">11 / 12</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SLIDE 12 — CTA
+════════════════════════════════════════════════════ -->
+<div class="slide" id="s12">
+  <div class="slide-header" style="background:linear-gradient(90deg,var(--gold-bright),var(--gold-deep),var(--gold-bright));"></div>
+  <!-- decorative -->
+  <div class="cover-bg-ring" style="width:400px;height:400px;bottom:-100px;left:-100px;"></div>
+  <div class="cover-bg-ring" style="width:600px;height:600px;top:-250px;right:-200px;"></div>
+
+  <div class="zudogu-badge">
+    <div class="zudogu-z">Z</div>
+    <span class="zudogu-text">ZUDOGU</span>
+  </div>
+
+  <div class="cta-content">
+    <div style="font-size:40px;margin-bottom:16px;">🚀</div>
+    <div class="cta-title">พร้อมเพิ่ม<span> Recurring Revenue</span><br>ให้ธุรกิจของคุณ?</div>
+    <div class="cta-sub">
+      สมัครเป็น Zudobot Partner วันนี้ — ไม่มีค่าสมัคร ไม่มีค่า Setup<br>
+      เริ่มรับเงินได้ทันทีที่ลูกค้าแรกของคุณสมัครใช้งาน
+    </div>
+
+    <a href="https://zudobot.zudogu.com" class="cta-btn">
+      เริ่มต้นเป็น Partner →
+    </a>
+
+    <div class="cta-links">
+      <a href="https://zudobot.zudogu.com" class="cta-link">🤖 zudobot.zudogu.com</a>
+      <span style="color:rgba(255,255,255,0.3);">•</span>
+      <a href="https://zudogu.com" class="cta-link">🏢 zudogu.com</a>
+      <span style="color:rgba(255,255,255,0.3);">•</span>
+      <span class="cta-link">📧 zudogu.official@gmail.com</span>
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;">
+      <span style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);font-size:11px;padding:4px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">🤝 Free to Join</span>
+      <span style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);font-size:11px;padding:4px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">💰 45% Margin</span>
+      <span style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);font-size:11px;padding:4px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">⚡ Setup ใน 10 นาที</span>
+      <span style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);font-size:11px;padding:4px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">🔁 Recurring Income</span>
+    </div>
+  </div>
+
+  <span class="slide-num" style="color:rgba(255,255,255,0.4);">12 / 12</span>
+</div>
+
+</body>
+</html>

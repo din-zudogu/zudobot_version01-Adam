@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Zudobot No-Code Injector</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, sans-serif;
+        width: 300px;
+        padding: 16px;
+        margin: 0;
+        color: #111;
+      }
+      h1 { font-size: 15px; margin: 0 0 4px; }
+      p.muted { font-size: 12px; color: #666; margin: 0 0 12px; line-height: 1.4; }
+      button {
+        width: 100%;
+        padding: 10px 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      #btn-signin { background: #4285f4; color: #fff; }
+      #btn-inject { background: #1e5bc6; color: #fff; }
+      #status {
+        margin-top: 10px;
+        font-size: 11px;
+        padding: 8px;
+        border-radius: 6px;
+        background: #f4f4f5;
+        min-height: 2.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Zudobot No-Code Injector</h1>
+    <p class="muted">เปิดเว็บร้านค้าของคุณ แล้วกดฝังสคริปต์ — ไม่ต้องแตะ source code</p>
+    <button type="button" id="btn-signin">เข้าสู่ระบบ Google</button>
+    <button type="button" id="btn-inject">ฝังสคริปต์บนแท็บนี้</button>
+    <div id="status">พร้อมใช้งาน</div>
+    <script src="popup.js"></script>
+  </body>
+</html>

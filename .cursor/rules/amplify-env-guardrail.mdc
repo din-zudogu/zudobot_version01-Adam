@@ -1,0 +1,11 @@
+---
+description: AWS Amplify-only environment variables; no dotenv or local .env in apps
+alwaysApply: true
+---
+
+### 🔒 [กฎเหล็กระดับวิกฤต] มาตรฐานการควบคุมสภาพแวดล้อมและความลับ (AWS Amplify Environment Variables Hard Guardrail)
+1. **AWS Amplify Variables Only**: ทุกค่าคอนฟิกูเรชัน (Configurations), API Keys, Tokens, URIs, และข้อมูลความลับทั้งหมดที่แอปพลิเคชันต้องใช้ในการประมวลผล **ต้องถูกเรียกผ่าน Native `process.env` ของ Node.js ที่ส่งตรงมาจากสล็อต Environment Variables บน AWS Amplify Console เท่านั้น!**
+2. **Absolute File Banned**: ห้ามคอมไพล์ ห้ามเรียกใช้ หรือติดตั้งแพ็กเกจโหลดไฟล์โลคอล เช่น `dotenv` หรือไลบรารีอ่านไฟล์ `.env`, `.env.local`, `.env.production` บนดิสก์อย่างเด็ดขาด ระบบห้ามพึ่งพาไฟล์จำลองสภาพแวดล้อมใดๆ ใน Directory ของแอป
+3. **No Fallback / Anti-Mocker**: ห้ามเขียนโค้ดประเภทให้ค่า Default หรือสตริงเปล่าสำรองสำหรับความลับ หากค่าตัวแปรจาก AWS Amplify ไม่มีอยู่จริงหรือเป็นค่าว่าง ระบบต้องตัดการทำงานทันที พร้อม Error ที่ระบุชื่อตัวแปร ห้ามปล่อยผ่านเด็ดขาด
+
+ใช้ `apps/web/lib/env/amplifyGuardrail.ts` — ห้ามเพิ่ม `dotenv` ใน `apps/web`
