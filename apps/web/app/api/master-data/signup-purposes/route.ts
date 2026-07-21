@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
     await ensureMasterData();
   } catch (err) {
     console.error("[master-data/signup-purposes] ensureMasterData failed:", err);
-    return NextResponse.json({ error: "master_data_unavailable" }, { status: 503 });
+    return NextResponse.json(
+      { error: "master_data_unavailable", details: err instanceof Error ? err.message : String(err) },
+      { status: 503 }
+    );
   }
 
   const db = getPostgresDb();
