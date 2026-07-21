@@ -13,7 +13,8 @@ type NavEntry = NavItem | NavGroup;
 
 const NAV: NavEntry[] = [
   { kind: "item", href: "/admin/tenants",          icon: "👥", label: "Tenants" },
-  { kind: "item", href: "/admin/partners",          icon: "🤝", label: "RAG Analytics" },
+  { kind: "item", href: "/admin/partners",          icon: "🤝", label: "Partners" },
+  { kind: "item", href: "/admin/rag-analytics",     icon: "🔍", label: "RAG Analytics" },
   { kind: "item", href: "/admin/zudobot-config",    icon: "🤖", label: "Bot Config (ตั้งค่าบอทกลาง)" },
   { kind: "item", href: "/admin/zudobot",           icon: "🛡️", label: "สิทธิ์ติดตั้ง Zudobot Embed" },
   { kind: "item", href: "/admin/admins",            icon: "🛡",  label: "Admins" },
