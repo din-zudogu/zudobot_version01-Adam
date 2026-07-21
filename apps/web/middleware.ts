@@ -82,6 +82,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/widget/") ||
     pathname.startsWith("/api/embed/") ||
     pathname.startsWith("/api/public/") ||
+    // Public, read-only, CORS-open by design — used by the embedded widget
+    // (unauthenticated external site visitors) and the onboarding PDPA modal
+    // for users still in "pending" registration (no full session yet).
+    pathname.startsWith("/api/legal-documents/") ||
     // Machine-to-machine cron endpoints — every handler under /api/cron/ is
     // guarded by INTERNAL_CRON_SECRET, so the session-auth redirect must not
     // intercept them (external schedulers / EventBridge carry no session cookie).
