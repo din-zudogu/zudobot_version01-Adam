@@ -17,6 +17,12 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+// Without this, Next.js can statically cache this GET handler's response at
+// build time (no cookies/headers/searchParams are read, so it looks "static"
+// to Next's heuristic) — baking in a stale "no_active_document" 404 forever,
+// even after a document is seeded into Mongo afterward.
+export const dynamic = "force-dynamic";
+
 export function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
