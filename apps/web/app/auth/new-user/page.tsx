@@ -22,7 +22,11 @@ function getCookie(name: string): string | null {
 export default function NewUserPage() {
   const router = useRouter();
   const { session, status, role, phase } = useSyncPendingRegistration();
-  const [packageLabel, setPackageLabel] = useState<string | null>(null);
+  // Always resolves to something — either the specific package/plan the user
+  // clicked through from, or the Trial fallback every unspecified signup
+  // actually gets. This line is never blank.
+  const [packageLabel, setPackageLabel] = useState<string>("Trial 14 วัน");
+  const [isExplicitPackage, setIsExplicitPackage] = useState(false);
 
   const user = session?.user as { email?: string } | undefined;
 
@@ -37,14 +41,18 @@ export default function NewUserPage() {
         fetch(`/api/checkout/validate?pkg=${pkgId}`)
           .then((res) => (res.ok ? res.json() : null))
           .then((json) => {
-            if (json?.package?.name) setPackageLabel(json.package.name);
+            if (json?.package?.name) {
+              setPackageLabel(json.package.name);
+              setIsExplicitPackage(true);
+            }
           })
           .catch(() => {});
       } else if (planId) {
         setPackageLabel(PLAN_LABELS[planId] ?? planId);
+        setIsExplicitPackage(true);
       }
     } catch {
-      // malformed cookie — ignore, just don't show the package hint
+      // malformed cookie — keep the default Trial label
     }
   }, []);
 
@@ -112,11 +120,11 @@ export default function NewUserPage() {
             ท่านต้องการสมัครตอนนี้หรือไม่?
           </p>
 
-          {packageLabel && (
-            <div className="mb-4 px-4 py-2.5 rounded-xl bg-brand-50 border border-brand-200 text-sm text-brand-700">
-              คุณเข้ามาสมัครจากแพ็กเกจสำเร็จรูป: <strong>{packageLabel}</strong>
-            </div>
-          )}
+          <div className="mb-4 px-4 py-2.5 rounded-xl bg-brand-50 border border-brand-200 text-sm text-brand-700">
+            {isExplicitPackage
+              ? <>คุณเข้ามาสมัครจากแพ็กเกจสำเร็จรูป: <strong>{packageLabel}</strong></>
+              : <>ยังไม่ได้เลือกแพ็กเกจ/แผนใด — จะเริ่มต้นด้วย <strong>{packageLabel}</strong> (แพ็กเกจเริ่มต้น)</>}
+          </div>
 
           <div className="flex flex-col gap-3 mt-4">
             <button
