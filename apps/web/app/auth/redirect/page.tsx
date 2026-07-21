@@ -1,6 +1,6 @@
 "use client";
 
-import { getSession, useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
@@ -105,21 +105,23 @@ function AuthRedirectInner() {
           if (check.ok) {
             const data = (await check.json()) as { registered?: boolean };
             if (data.registered) {
-              // The User row exists (onboarding/complete already succeeded) —
-              // update() + getSession() usually reflect that immediately, but
-              // the cookie write can occasionally lag by a beat. Retry a
-              // couple of times before concluding registration never happened
-              // and bouncing the user back to /auth/new-user, which would be
-              // wrong (and confusing) for an account that's already created.
-              for (let attempt = 0; attempt < 3; attempt++) {
-                await updateRef.current();
-                const fresh = await getSession();
-                const freshRole = (fresh?.user as { role?: string } | undefined)?.role;
-                if (freshRole && freshRole !== "pending") {
-                  return;
-                }
-                if (attempt < 2) await new Promise((r) => setTimeout(r, 400));
+              // The User row exists (onboarding/complete already succeeded).
+              // update() writes a new JWT cookie via the jwt() callback, but
+              // this SPA's useSession() client state doesn't reliably reflect
+              // that afterward (retrying update()+getSession() in-place never
+              // showed the new role, even repeatedly). Force one full reload
+              // instead — that makes middleware/SSR decode the cookie fresh
+              // on a real request, sidestepping the client-side session hook
+              // entirely. Guard with sessionStorage so a genuine failure
+              // (cookie never updated) doesn't reload forever.
+              await updateRef.current();
+              const alreadyReloaded = sessionStorage.getItem("zudo-pending-reload") === "1";
+              if (!alreadyReloaded) {
+                sessionStorage.setItem("zudo-pending-reload", "1");
+                window.location.reload();
+                return;
               }
+              sessionStorage.removeItem("zudo-pending-reload");
             }
           }
         } catch {
