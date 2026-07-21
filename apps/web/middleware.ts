@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { AMPLIFY_CONFIG } from "@/lib/env/amplifyGuardrail";
+import { isSessionRevoked } from "@/lib/security/sessionRevocation";
 
 // ── Layer 2: Dynamic CSP for /embed pages ─────────────────────────
 // Fetches per-tenant allowedDomains from /api/embed/csp (Node.js runtime,
@@ -100,6 +101,18 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // ── Force-logout check — admin-triggered session revocation ─────
+  // Fail-open: if Redis is unset/unreachable, isSessionRevoked() returns false.
+  if (token.sub) {
+    const revoked = await isSessionRevoked(token.sub as string, (token.iat as number) ?? 0);
+    if (revoked) {
+      const res = NextResponse.redirect(new URL("/login", request.url));
+      res.cookies.delete("authjs.session-token");
+      res.cookies.delete("__Secure-authjs.session-token");
+      return res;
+    }
   }
 
   const role               = token.role as string;

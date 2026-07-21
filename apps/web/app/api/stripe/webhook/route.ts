@@ -18,6 +18,7 @@ import {
   calculatePrice,
 } from "@/lib/payment/pmRules";
 import type { BotState } from "@/types";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -119,7 +120,14 @@ async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
     );
 
     await syncBotState(tenantId, "active", planId);
+    await logPaymentEvent(tenantId, "checkout.session.completed", { planId, isPromptPay: true });
   }
+}
+
+// ── Payment log helper ────────────────────────────────────────────
+async function logPaymentEvent(tenantId: string, action: string, details?: Record<string, unknown>) {
+  const user = await UserModel.findById(tenantId).select("email").lean() as { email?: string } | null;
+  await logSystemEvent({ category: "payment", action, email: user?.email, details: { tenantId, ...details } });
 }
 
 async function onSubscriptionChanged(sub: Stripe.Subscription) {
@@ -165,6 +173,7 @@ async function onSubscriptionChanged(sub: Stripe.Subscription) {
 
   // Re-evaluate bot state
   await syncBotState(tenantId, status, planId);
+  await logPaymentEvent(tenantId, "customer.subscription.changed", { planId, status });
 }
 
 async function onSubscriptionDeleted(sub: Stripe.Subscription) {
@@ -176,6 +185,7 @@ async function onSubscriptionDeleted(sub: Stripe.Subscription) {
     { status: "canceled", cancelledAt: new Date() }
   );
   await syncBotState(tenantId, "canceled", "starter");
+  await logPaymentEvent(tenantId, "customer.subscription.deleted");
 }
 
 async function onInvoicePaid(invoice: Stripe.Invoice) {
@@ -205,6 +215,7 @@ async function onInvoicePaid(invoice: Stripe.Invoice) {
     },
     { upsert: true }
   );
+  await logPaymentEvent(tenantId, "invoice.payment_succeeded", { amountPaidThb: amountPaid });
 }
 
 async function onInvoiceFailed(invoice: Stripe.Invoice) {
@@ -220,6 +231,7 @@ async function onInvoiceFailed(invoice: Stripe.Invoice) {
     }
   );
   await syncBotState(tenantId, "past_due", "starter");
+  await logPaymentEvent(tenantId, "invoice.payment_failed");
 }
 
 function graceDueDateFromConfig(): Date {
@@ -251,5 +263,9 @@ async function syncBotState(
   const { nextState } = evaluateBotState(ctx);
   if (nextState !== user.botState) {
     await UserModel.findByIdAndUpdate(tenantId, { botState: nextState });
+    await logSystemEvent({
+      category: "bot_state", action: "bot_state_change", email: user.email,
+      details: { previousState: user.botState, nextState, reason: "stripe_webhook", subStatus },
+    });
   }
 }

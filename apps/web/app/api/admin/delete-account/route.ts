@@ -35,6 +35,7 @@ import { RagEventLogModel } from "@/lib/db/models/RagEventLog";
 import { ZudobotConfig as ZudobotConfigModel } from "@/lib/db/models/ZudobotConfig";
 import { ChatSessionModel } from "@/lib/db/models/ChatSession";
 import { getStripe } from "@/lib/stripe/client";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 const PROTECTED_EMAIL = "zudogu.official@gmail.com";
 
@@ -228,6 +229,11 @@ export async function POST(req: NextRequest) {
   await UserModel.deleteOne({ email: targetEmail });
 
   console.log(`[admin/delete-account] Deleted: ${targetEmail} (${userId}) role=${user.role}`);
+  await logSystemEvent({
+    category: "admin_action", action: "hard_delete", email: targetEmail,
+    actorEmail: token.email?.toLowerCase(),
+    details: { targetType: "full_account", role: user.role, totalDocs: summary.totalDocs },
+  });
 
   return NextResponse.json({ ok: true, deleted: true, ...summary, dryRun: false });
 }

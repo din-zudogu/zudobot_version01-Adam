@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db/connect";
 import { KycSubmissionModel } from "@/lib/db/models/KycSubmission";
 import { UserModel } from "@/lib/db/models/User";
 import type { KycStatus } from "@/lib/db/models/KycSubmission";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 // PUT — approve / reject / request more info
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -43,7 +44,19 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       const user = await UserModel.findById(kyc.tenantId);
       if (user?.botState === "pending_kyc") {
         await UserModel.findByIdAndUpdate(kyc.tenantId, { botState: "trial" });
+        await logSystemEvent({
+          category: "admin_action", action: "kyc_approved", email: user.email,
+          actorEmail: (token.email as string | undefined)?.toLowerCase(),
+          details: { targetType: "tenant", botStateChange: { from: "pending_kyc", to: "trial" } },
+        });
       }
+    } else {
+      const user = await UserModel.findById(kyc.tenantId).select("email").lean() as { email?: string } | null;
+      await logSystemEvent({
+        category: "admin_action", action: `kyc_${body.status}`, email: user?.email,
+        actorEmail: (token.email as string | undefined)?.toLowerCase(),
+        details: { targetType: "tenant" },
+      });
     }
 
     return NextResponse.json({ ok: true, kyc });

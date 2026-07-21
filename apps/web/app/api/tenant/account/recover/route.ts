@@ -8,6 +8,7 @@ import { getServerToken } from "@/lib/auth/getServerToken";
 import { connectDB } from "@/lib/db/connect";
 import { UserModel } from "@/lib/db/models/User";
 import { SubscriptionModel } from "@/lib/db/models/Subscription";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 export async function POST(req: NextRequest) {
   const token = await getServerToken(req);
@@ -39,6 +40,10 @@ export async function POST(req: NextRequest) {
   await UserModel.findByIdAndUpdate(tenantId, {
     $unset: { pendingDeleteAt: 1 },
     botState: restoredState,
+  });
+  await logSystemEvent({
+    category: "bot_state", action: "bot_state_change", email: user.email,
+    details: { previousState: user.botState, nextState: restoredState, reason: "tenant_self_recover" },
   });
 
   return NextResponse.json({ ok: true, restoredState });

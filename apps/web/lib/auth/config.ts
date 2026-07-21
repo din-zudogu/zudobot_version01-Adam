@@ -7,6 +7,7 @@ import { connectDB } from "@/lib/db/connect";
 import { AMPLIFY_CONFIG, validateAmplifyEnvironment } from "@/lib/env/amplifyGuardrail";
 import { UserModel } from "@/lib/db/models/User";
 import { resolvePendingRegistrationToken } from "@/lib/auth/resolvePendingRegistration";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 interface ImpersonatingData {
   originalTenantId: string;
@@ -281,4 +282,31 @@ export const authConfig: NextAuthConfig = {
   },
 
   session: { strategy: "jwt" },
+
+  events: {
+    async signIn({ user, account }) {
+      try {
+        if (user?.email) {
+          await logSystemEvent({
+            category: "auth",
+            action:   "login",
+            email:    user.email.toLowerCase(),
+            details:  { provider: account?.provider },
+          });
+        }
+      } catch {
+        // Logging must never block sign-in
+      }
+    },
+    async signOut(message) {
+      try {
+        const token = (message as { token?: { email?: string } })?.token;
+        if (token?.email) {
+          await logSystemEvent({ category: "auth", action: "logout", email: token.email.toLowerCase() });
+        }
+      } catch {
+        // Logging must never block sign-out
+      }
+    },
+  },
 };

@@ -6,6 +6,7 @@ import { CostPriceScenarioModel } from "@/lib/db/models/CostPriceScenario";
 import { srv_expired_date_cal } from "@/lib/services/srv_expired_date_cal";
 import { syncVipStatus } from "@/lib/services/srv_vip_sync";
 import mongoose from "mongoose";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 async function deriveVipCostFromScenario(
   scenarioId: string,
@@ -143,6 +144,10 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     if (oldEmail && oldEmail !== newEmail) {
       await syncVipStatus(oldEmail).catch(() => {});
     }
+    await logSystemEvent({
+      category: "admin_action", action: "update_vip", email: newEmail, actorEmail: token?.email?.toLowerCase(),
+      details: { targetType: "vip" },
+    });
 
     return NextResponse.json({ vip });
   } catch (err) {
@@ -169,6 +174,10 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
     if (vip?.email) {
       await syncVipStatus(vip.email).catch(() => {});
     }
+    await logSystemEvent({
+      category: "admin_action", action: "delete_vip", email: vip?.email, actorEmail: token?.email?.toLowerCase(),
+      details: { targetType: "vip" },
+    });
 
     return NextResponse.json({ ok: true });
   } catch {

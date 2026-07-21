@@ -6,6 +6,7 @@ import { CostPriceScenarioModel } from "@/lib/db/models/CostPriceScenario";
 import { srv_expired_date_cal } from "@/lib/services/srv_expired_date_cal";
 import { syncVipStatus } from "@/lib/services/srv_vip_sync";
 import mongoose from "mongoose";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 /**
  * Auto-derive totalCostAr from a CostPriceScenario when the caller did not
@@ -137,6 +138,10 @@ export async function POST(req: NextRequest) {
 
     // Sync User.botState + isVip for this email
     await syncVipStatus(email).catch(() => {});
+    await logSystemEvent({
+      category: "admin_action", action: "create_vip", email, actorEmail: token?.email?.toLowerCase(),
+      details: { targetType: "vip" },
+    });
 
     return NextResponse.json({ vip }, { status: 201 });
   } catch (err) {

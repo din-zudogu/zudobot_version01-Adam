@@ -20,6 +20,7 @@ import { ProductModel } from "@/lib/db/models/Product";
 import { NotificationModel } from "@/lib/db/models/Notification";
 import { InvoiceModel } from "@/lib/db/models/Invoice";
 import { getStripe } from "@/lib/stripe/client";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
@@ -66,20 +67,28 @@ export async function POST(req: NextRequest) {
   }
 
   const tenantId = token.sub;
+  const email = (token.email as string | undefined)?.toLowerCase();
   await connectDB();
 
   try {
     if (body.type === "soft") {
       const deletionDate = new Date(Date.now() + NINETY_DAYS_MS);
-      await UserModel.findByIdAndUpdate(tenantId, {
+      const prevUser = await UserModel.findByIdAndUpdate(tenantId, {
         pendingDeleteAt: deletionDate,
         botState: "disabled",
+      });
+      await logSystemEvent({
+        category: "bot_state", action: "bot_state_change", email,
+        details: { previousState: prevUser?.botState, nextState: "disabled", reason: "tenant_self_service_soft_delete" },
       });
       return NextResponse.json({ ok: true, deletionDate: deletionDate.toISOString() });
     }
 
     // Hard delete
     await hardDeleteTenant(tenantId);
+    await logSystemEvent({
+      category: "bot_state", action: "account_hard_delete_self", email,
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[account/delete]", err);

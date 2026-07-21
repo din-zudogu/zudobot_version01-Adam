@@ -3,12 +3,11 @@ import { getServerToken } from "@/lib/auth/getServerToken";
 import { connectDB } from "@/lib/db/connect";
 import { PartnerProfileModel, generateInviteToken, generateVerifyCode, verifyUrl } from "@/lib/db/models/PartnerProfile";
 import { SubscriptionModel } from "@/lib/db/models/Subscription";
-import { UserModel } from "@/lib/db/models/User";
 import { sendPartnerInviteEmail } from "@/lib/email/resend";
+import { softDeletePartner, hardDeletePartner, restorePartner } from "@/lib/admin/partnerActions";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 type Params = { params: Promise<{ id: string }> };
-
-const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const token = await getServerToken(_req);
@@ -51,65 +50,41 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   await connectDB();
 
+  const actorEmail = (token.email as string | undefined)?.toLowerCase();
+
   // ── Delete / restore actions ─────────────────────────────────────────────
   if (body.action) {
-    const partner = await PartnerProfileModel.findById(id);
-    if (!partner) return NextResponse.json({ error: "not_found" }, { status: 404 });
-
-    const hasRealUser = partner.userId && !partner.userId.startsWith("pending_");
+    const partnerForLog = await PartnerProfileModel.findById(id).select("email").lean() as { email?: string } | null;
+    if (!partnerForLog) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
     if (body.action === "soft_delete") {
-      const deletionDate = new Date(Date.now() + NINETY_DAYS_MS);
-
-      // Update PartnerProfile (for display in admin UI)
-      await PartnerProfileModel.findByIdAndUpdate(id, {
-        $set: { pendingDeleteAt: deletionDate, status: "suspended" },
+      const result = await softDeletePartner(id);
+      if (!result.ok) return NextResponse.json({ error: result.error }, { status: 404 });
+      await logSystemEvent({
+        category: "admin_action", action: "soft_delete", email: partnerForLog.email, actorEmail,
+        details: { targetType: "partner", deletionDate: result.deletionDate },
       });
-
-      // Block the partner's login if they have a real User record
-      if (hasRealUser) {
-        await UserModel.findByIdAndUpdate(partner.userId, {
-          pendingDeleteAt: deletionDate,
-          deletedByAdmin:  true,
-        });
-      }
-
-      return NextResponse.json({ ok: true, deletionDate: deletionDate.toISOString() });
+      return NextResponse.json({ ok: true, deletionDate: result.deletionDate });
     }
 
     if (body.action === "hard_delete") {
-      // Unlink all tenants referred by this partner
-      await SubscriptionModel.updateMany(
-        { referredByPartnerId: id },
-        { $unset: { referredByPartnerId: 1, partnerStripeAccountId: 1 } }
-      );
-
-      // Delete PartnerProfile and User (if real)
-      await Promise.all([
-        PartnerProfileModel.deleteOne({ _id: id }),
-        hasRealUser ? UserModel.deleteOne({ _id: partner.userId }) : Promise.resolve(),
-      ]);
-
+      const result = await hardDeletePartner(id);
+      if (!result.ok) return NextResponse.json({ error: result.error }, { status: 404 });
+      await logSystemEvent({
+        category: "admin_action", action: "hard_delete", email: partnerForLog.email, actorEmail,
+        details: { targetType: "partner" },
+      });
       return NextResponse.json({ ok: true });
     }
 
     if (body.action === "restore") {
-      if (!partner.pendingDeleteAt) {
-        return NextResponse.json({ ok: true, message: "already_active" });
-      }
-
-      await PartnerProfileModel.findByIdAndUpdate(id, {
-        $unset: { pendingDeleteAt: 1 },
-        $set:   { status: "active" },
+      const result = await restorePartner(id);
+      if (!result.ok) return NextResponse.json({ error: result.error }, { status: 404 });
+      await logSystemEvent({
+        category: "admin_action", action: "restore", email: partnerForLog.email, actorEmail,
+        details: { targetType: "partner" },
       });
-
-      if (hasRealUser) {
-        await UserModel.findByIdAndUpdate(partner.userId, {
-          $unset: { pendingDeleteAt: 1, deletedByAdmin: 1 },
-        });
-      }
-
-      return NextResponse.json({ ok: true });
+      return NextResponse.json(result);
     }
   }
 
@@ -163,6 +138,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     result.emailSent = emailSent;
   }
 
+  if (body.status) {
+    await logSystemEvent({
+      category: "admin_action", action: "set_status", email: partner.email, actorEmail,
+      details: { targetType: "partner", status: body.status },
+    });
+  }
+  if (body.resendInvite) {
+    await logSystemEvent({
+      category: "admin_action", action: "resend_invite", email: partner.email, actorEmail,
+    });
+  }
+
   return NextResponse.json({ partner: result });
 }
 
@@ -183,5 +170,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   ).lean();
 
   if (!partner) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  await logSystemEvent({
+    category: "admin_action", action: "legacy_soft_delete", email: partner.email,
+    actorEmail: (token.email as string | undefined)?.toLowerCase(),
+    details: { targetType: "partner" },
+  });
   return NextResponse.json({ success: true });
 }

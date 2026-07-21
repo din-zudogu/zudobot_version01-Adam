@@ -19,6 +19,7 @@ import { PackageConfigModel } from "@/lib/db/models/PackageConfig";
 import { NotificationModel } from "@/lib/db/models/Notification";
 import { getPlatformSettings } from "@/lib/db/models/PlatformSettings";
 import { isMemoryLimitExceeded } from "@/lib/memory/memoryService";
+import { logSystemEventAsync } from "@/lib/logging/systemLogger";
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -126,6 +127,10 @@ export async function checkQuota(tenantId: string): Promise<QuotaCheckResult> {
   // 2. Trial expiry
   if (user.botState === "trial" && user.trialEndsAt && user.trialEndsAt < new Date()) {
     await UserModel.findByIdAndUpdate(tenantId, { botState: "trial_expired" });
+    logSystemEventAsync({
+      category: "bot_state", action: "bot_state_change", email: user.email,
+      details: { previousState: "trial", nextState: "trial_expired", reason: "trial_ended" },
+    });
     return {
       allowed: false,
       blockMessage: cfg.quotaExhaustedBotMessage,
@@ -209,6 +214,10 @@ export async function checkQuota(tenantId: string): Promise<QuotaCheckResult> {
 
     if (limits.isTrial) {
       await UserModel.findByIdAndUpdate(tenantId, { botState: "trial_quota_daily_exhausted" });
+      logSystemEventAsync({
+        category: "bot_state", action: "bot_state_change", email: user.email,
+        details: { previousState: user.botState, nextState: "trial_quota_daily_exhausted", reason: "daily_quota_exhausted" },
+      });
     }
 
     return { allowed: false, blockMessage: blockMsg, limits, currentUsage };

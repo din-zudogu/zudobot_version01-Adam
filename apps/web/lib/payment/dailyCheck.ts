@@ -24,6 +24,7 @@ import { createNotification, notificationSentToday } from "@/lib/notifications/n
 import { sendEmail, promptPayRenewalHtml } from "@/lib/email/resend";
 import { AMPLIFY_CONFIG } from "@/lib/env/amplifyGuardrail";
 import type { BotState } from "@/types";
+import { logSystemEventAsync } from "@/lib/logging/systemLogger";
 
 export interface DailyCheckResult {
   quotaReset:            number;
@@ -65,6 +66,10 @@ export async function runDailyCheck(now = new Date()): Promise<DailyCheckResult>
 
   for (const user of expiredTrials) {
     await UserModel.findByIdAndUpdate(user._id, { botState: "trial_expired" });
+    logSystemEventAsync({
+      category: "bot_state", action: "bot_state_change", email: user.email,
+      details: { previousState: user.botState, nextState: "trial_expired", reason: "trial_ended" },
+    });
     // Notify tenant
     const tid = user._id.toString();
     if (!(await notificationSentToday(tid, "trial_expired"))) {
@@ -85,10 +90,16 @@ export async function runDailyCheck(now = new Date()): Promise<DailyCheckResult>
   });
 
   for (const sub of expiredGrace) {
-    await UserModel.findOneAndUpdate(
+    const prevUser = await UserModel.findOneAndUpdate(
       { _id: sub.tenantId, botState: "grace_5pct" },
       { botState: "suspended_payment" }
     );
+    if (prevUser) {
+      logSystemEventAsync({
+        category: "bot_state", action: "bot_state_change", email: prevUser.email,
+        details: { previousState: "grace_5pct", nextState: "suspended_payment", reason: "grace_period_expired" },
+      });
+    }
     const tid = sub.tenantId.toString();
     if (!(await notificationSentToday(tid, "payment_grace"))) {
       await createNotification(tid, "payment_grace",
@@ -127,6 +138,10 @@ export async function runDailyCheck(now = new Date()): Promise<DailyCheckResult>
     const { nextState, reason } = evaluateBotState(ctx);
     if (nextState !== user.botState && reason !== "no_change") {
       await UserModel.findByIdAndUpdate(user._id, { botState: nextState });
+      logSystemEventAsync({
+        category: "bot_state", action: "bot_state_change", email: user.email,
+        details: { previousState: user.botState, nextState, reason },
+      });
       result.stateTransitions++;
     }
   }

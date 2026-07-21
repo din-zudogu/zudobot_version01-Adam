@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db/connect";
 import { UserModel } from "@/lib/db/models/User";
 import { enforceRateLimit, clientIp } from "@/lib/security/rateLimit";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
     $set: { passwordHash },
     $unset: { passwordResetTokenHash: "", passwordResetExpiresAt: "" },
   });
+  await logSystemEvent({ category: "auth", action: "password_reset", email, ip: clientIp(req) });
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

@@ -3,6 +3,7 @@ import { getServerToken } from "@/lib/auth/getServerToken";
 import { connectDB } from "@/lib/db/connect";
 import { KycSubmissionModel } from "@/lib/db/models/KycSubmission";
 import { UserModel } from "@/lib/db/models/User";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 // GET — fetch current tenant's KYC status
 export async function GET(req: NextRequest) {
@@ -69,7 +70,11 @@ export async function POST(req: NextRequest) {
     });
 
     // Move to pending_kyc bot state if enterprise
-    await UserModel.findByIdAndUpdate(token.sub, { botState: "pending_kyc" });
+    const prevUser = await UserModel.findByIdAndUpdate(token.sub, { botState: "pending_kyc" });
+    await logSystemEvent({
+      category: "bot_state", action: "bot_state_change", email: prevUser?.email,
+      details: { previousState: prevUser?.botState, nextState: "pending_kyc", reason: "tenant_self_service" },
+    });
 
     return NextResponse.json({ ok: true, kycId: kyc._id.toString() }, { status: 201 });
   } catch (err: unknown) {

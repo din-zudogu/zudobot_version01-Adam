@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db/connect";
 import { PartnerProfileModel } from "@/lib/db/models/PartnerProfile";
 import { UserModel } from "@/lib/db/models/User";
 import { getServerToken } from "@/lib/auth/getServerToken";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 /**
  * GET /api/partner/verify?token=xxx
@@ -130,6 +131,10 @@ export async function POST(req: NextRequest) {
         $set:   { userId: newUser._id.toString(), email: sessionEmail, status: "active", verifyAttempts: 0 },
         $unset: { inviteToken: "", inviteExpiresAt: "", verifyCode: "", verifyCodeExpiresAt: "", verifyLockedAt: "" },
       });
+      await logSystemEvent({
+        category: "auth", action: "signup", email: sessionEmail,
+        details: { role: "partner_admin" },
+      });
       return NextResponse.json({ success: true });
     }
   } else {
@@ -150,6 +155,9 @@ export async function POST(req: NextRequest) {
   await PartnerProfileModel.findByIdAndUpdate(partner._id, {
     $set:   { userId: user._id.toString(), email: sessionEmail, status: "active", verifyAttempts: 0 },
     $unset: { inviteToken: "", inviteExpiresAt: "", verifyCode: "", verifyCodeExpiresAt: "", verifyLockedAt: "" },
+  });
+  await logSystemEvent({
+    category: "auth", action: "partner_role_added", email: sessionEmail,
   });
 
   return NextResponse.json({ success: true });

@@ -14,6 +14,7 @@ import { AMPLIFY_CONFIG } from "@/lib/env/amplifyGuardrail";
 import { getPostgresDb } from "@/lib/db/postgres";
 import { businessCategories, signupPurposes } from "@/lib/db/pg/schema";
 import { ensureMasterData } from "@/lib/db/pg/ensureMasterData";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 interface OnboardingBody {
   purposeId: string;
@@ -117,6 +118,10 @@ export async function POST(req: NextRequest) {
           pdpaConsentAt,
         });
         await UserModel.findByIdAndUpdate(user._id, { tenantId: user._id.toString() });
+        await logSystemEvent({
+          category: "auth", action: "signup", email,
+          details: { role: "tenant", initialBotState: "trial" },
+        });
       } else if (!user.onboardingComplete) {
         await UserModel.findByIdAndUpdate(user._id, {
           onboardingComplete: true,
@@ -131,6 +136,11 @@ export async function POST(req: NextRequest) {
         onboardingComplete: true,
         botState: "trial",
         trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      });
+      await logSystemEvent({
+        category: "bot_state", action: "bot_state_change",
+        email: (token.email as string | undefined)?.toLowerCase(),
+        details: { nextState: "trial", reason: "onboarding_complete" },
       });
     }
 
