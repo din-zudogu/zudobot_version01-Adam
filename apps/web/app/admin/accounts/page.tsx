@@ -5,7 +5,7 @@ import { DeleteAccountModal, type DeleteTarget } from "@/components/admin/Delete
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AccountType = "tenant" | "partner" | "vip" | "admin";
+type AccountType = "tenant" | "partner" | "vip" | "admin" | "pending";
 type BotState =
   | "trial" | "trial_quota_daily_exhausted" | "trial_expired" | "active"
   | "grace_5pct" | "suspended_quota" | "suspended_payment" | "pending_kyc" | "disabled";
@@ -19,6 +19,7 @@ interface AccountRow {
   partner?: { partnerId?: string; status: string; isOrphaned: boolean; pendingDeleteAt?: string };
   vip?: { vipId: string; isActive: boolean; endDate?: string; label?: string };
   admin?: { role: string };
+  pending?: { attempts: number; lastAttemptAt: string };
 }
 
 interface ApiResponse {
@@ -38,6 +39,7 @@ const TYPE_BADGE: Record<AccountType, string> = {
   partner: "bg-purple-100  text-purple-800  border-purple-200",
   vip:     "bg-amber-100   text-amber-800   border-amber-200",
   admin:   "bg-zinc-200    text-zinc-800    border-zinc-300",
+  pending: "bg-orange-100  text-orange-800  border-orange-200",
 };
 
 const PAGE_SIZE = 20;
@@ -146,6 +148,7 @@ export default function AdminAccountsPage() {
           <option value="partner">Partner</option>
           <option value="vip">VIP</option>
           <option value="admin">Admin</option>
+          <option value="pending">Pending (สมัครไม่สำเร็จ)</option>
         </select>
       </div>
 
@@ -192,6 +195,14 @@ export default function AdminAccountsPage() {
                         )}
                         {a.admin && (
                           <p><span className="text-text-muted">Admin:</span> <span className="font-semibold text-text-primary">{a.admin.role}</span></p>
+                        )}
+                        {a.pending && (
+                          <div>
+                            <p><span className="text-orange-700 font-semibold">สมัครไม่สำเร็จ</span> — ไม่มีบัญชีในระบบ</p>
+                            <p className="text-text-muted">
+                              พยายาม {a.pending.attempts} ครั้ง — ล่าสุด {new Date(a.pending.lastAttemptAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3">

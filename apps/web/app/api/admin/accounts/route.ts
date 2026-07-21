@@ -16,8 +16,9 @@ import { connectDB } from "@/lib/db/connect";
 import { UserModel } from "@/lib/db/models/User";
 import { PartnerProfileModel } from "@/lib/db/models/PartnerProfile";
 import { VipTenantModel } from "@/lib/db/models/VipTenant";
+import { SystemLogModel } from "@/lib/db/models/SystemLog";
 
-type AccountType = "tenant" | "partner" | "vip" | "admin";
+type AccountType = "tenant" | "partner" | "vip" | "admin" | "pending";
 
 export async function GET(req: NextRequest) {
   const token = await getServerToken(req);
@@ -33,11 +34,23 @@ export async function GET(req: NextRequest) {
 
   await connectDB();
 
-  // ── Phase 1: dedupe + paginate the union of emails across 3 collections ──
+  // ── Phase 1: dedupe + paginate the union of emails across 4 sources ──────
+  // Includes emails that never got a User/Partner/Vip doc at all — e.g. a
+  // Google sign-in that never completed onboarding (deferred user creation
+  // means nothing is persisted for it except this log entry).
   const pipeline: PipelineStage[] = [
     { $project: { _id: 0, email: { $toLower: "$email" } } },
     { $unionWith: { coll: "partnerprofiles", pipeline: [{ $project: { _id: 0, email: { $toLower: "$email" } } }] } },
     { $unionWith: { coll: "viptenants",      pipeline: [{ $project: { _id: 0, email: { $toLower: "$email" } } }] } },
+    {
+      $unionWith: {
+        coll: "systemlogs",
+        pipeline: [
+          { $match: { category: "auth", action: "pending_registration_started", email: { $exists: true } } },
+          { $project: { _id: 0, email: { $toLower: "$email" } } },
+        ],
+      },
+    },
   ];
   if (q) pipeline.push({ $match: { email: { $regex: q, $options: "i" } } });
   pipeline.push(
@@ -60,32 +73,48 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Phase 2: batch-fetch + enrich ──────────────────────────────────────────
-  const [users, partners, vips] = await Promise.all([
+  const [users, partners, vips, pendingAgg] = await Promise.all([
     UserModel.find({ email: { $in: emails } }).lean(),
     PartnerProfileModel.find({ email: { $in: emails } }).select("-inviteToken -verifyCode").lean(),
     VipTenantModel.find({ email: { $in: emails } }).lean(),
+    SystemLogModel.aggregate([
+      { $match: { category: "auth", action: "pending_registration_started", email: { $in: emails } } },
+      { $group: { _id: "$email", attempts: { $sum: 1 }, lastAttemptAt: { $max: "$createdAt" } } },
+    ]),
   ]);
 
   const userByEmail    = Object.fromEntries(users.map((u) => [u.email.toLowerCase(), u]));
   const partnerByEmail = Object.fromEntries(partners.map((p) => [p.email.toLowerCase(), p]));
   const vipByEmail     = Object.fromEntries(vips.map((v) => [v.email.toLowerCase(), v]));
+  const pendingByEmail = Object.fromEntries(
+    pendingAgg.map((p: { _id: string; attempts: number; lastAttemptAt: Date }) => [p._id, p])
+  );
 
   let accounts = emails.map((email) => {
     const user    = userByEmail[email] as (typeof users)[number] | undefined;
     const partner = partnerByEmail[email] as (typeof partners)[number] | undefined;
     const vip     = vipByEmail[email] as (typeof vips)[number] | undefined;
+    const pending = pendingByEmail[email] as { attempts: number; lastAttemptAt: Date } | undefined;
 
     const types: AccountType[] = [];
     if (user && (user.role === "tenant" || (user.roles ?? []).includes("tenant"))) types.push("tenant");
     if (partner || user?.role === "partner_admin" || (user?.roles ?? []).includes("partner_admin")) types.push("partner");
     if (vip) types.push("vip");
     if (user && (user.role === "admin" || user.role === "super_admin")) types.push("admin");
+    // Only surface as "pending" when no real account exists at all — an email
+    // that later completed signup keeps its old pending_registration_started
+    // log rows, but shouldn't show a stale "pending" badge once it has a real type.
+    if (types.length === 0 && pending) types.push("pending");
 
     return {
       email,
       userId:    user?._id?.toString(),
-      createdAt: user?.createdAt ?? partner?.createdAt ?? vip?.createdAt,
+      createdAt: user?.createdAt ?? partner?.createdAt ?? vip?.createdAt ?? pending?.lastAttemptAt,
       types,
+      pending: types.includes("pending") && pending ? {
+        attempts:      pending.attempts,
+        lastAttemptAt: pending.lastAttemptAt,
+      } : undefined,
       tenant: types.includes("tenant") && user ? {
         botState:        user.botState,
         trialEndsAt:     user.trialEndsAt,

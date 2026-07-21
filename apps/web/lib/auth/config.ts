@@ -133,6 +133,14 @@ export const authConfig: NextAuthConfig = {
 
           if (!existing) {
             applyPendingNewUser();
+            // No User doc is created here (deferred until onboarding completes) —
+            // this is the only server-side moment we can record that this email
+            // *attempted* sign-in, so admins can see "stuck at pending registration"
+            // even though nothing else gets persisted for it.
+            await logSystemEvent({
+              category: "auth", action: "pending_registration_started",
+              email: user.email.toLowerCase(),
+            });
           } else {
             const pendingDeleteAt = existing.pendingDeleteAt;
             if (pendingDeleteAt) {
