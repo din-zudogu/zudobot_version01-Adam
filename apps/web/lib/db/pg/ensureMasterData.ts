@@ -34,7 +34,7 @@ async function upsertCategory(
           is_active = true
     RETURNING id
   `);
-  return (rows as unknown as { id: string }[])[0].id;
+  return (rows as unknown as { rows: { id: string }[] }).rows[0].id;
 }
 
 async function upsertPurpose(
@@ -78,7 +78,7 @@ async function doEnsure(): Promise<void> {
   `);
 
   const countRows = await db.execute(sql`SELECT count(*)::int AS count FROM business_categories`);
-  const categoryCount = (countRows as unknown as { count: number }[])[0].count;
+  const categoryCount = (countRows as unknown as { rows: { count: number }[] }).rows[0].count;
 
   if (categoryCount === 0) {
     for (let i = 0; i < BUSINESS_CATEGORIES.length; i++) {
@@ -92,7 +92,7 @@ async function doEnsure(): Promise<void> {
   }
 
   const purposeCountRows = await db.execute(sql`SELECT count(*)::int AS count FROM signup_purposes`);
-  const purposeCount = (purposeCountRows as unknown as { count: number }[])[0].count;
+  const purposeCount = (purposeCountRows as unknown as { rows: { count: number }[] }).rows[0].count;
 
   if (purposeCount === 0) {
     for (let i = 0; i < SIGNUP_PURPOSES.length; i++) {
