@@ -163,6 +163,9 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith("/onboarding") ||
       pathname.startsWith("/api/onboarding") ||
       pathname.startsWith("/api/user") ||
+      // Business-category/signup-purpose dropdowns used by the onboarding
+      // step-1 form — needed before the real User doc/role exists.
+      pathname.startsWith("/api/master-data") ||
       pathname.startsWith("/partner/join") ||
       pathname.startsWith("/api/partner/join") ||
       pathname.startsWith("/partner/verify") ||
