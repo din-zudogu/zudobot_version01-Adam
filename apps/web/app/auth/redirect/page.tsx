@@ -105,11 +105,20 @@ function AuthRedirectInner() {
           if (check.ok) {
             const data = (await check.json()) as { registered?: boolean };
             if (data.registered) {
-              await updateRef.current();
-              const fresh = await getSession();
-              const freshRole = (fresh?.user as { role?: string } | undefined)?.role;
-              if (freshRole && freshRole !== "pending") {
-                return;
+              // The User row exists (onboarding/complete already succeeded) —
+              // update() + getSession() usually reflect that immediately, but
+              // the cookie write can occasionally lag by a beat. Retry a
+              // couple of times before concluding registration never happened
+              // and bouncing the user back to /auth/new-user, which would be
+              // wrong (and confusing) for an account that's already created.
+              for (let attempt = 0; attempt < 3; attempt++) {
+                await updateRef.current();
+                const fresh = await getSession();
+                const freshRole = (fresh?.user as { role?: string } | undefined)?.role;
+                if (freshRole && freshRole !== "pending") {
+                  return;
+                }
+                if (attempt < 2) await new Promise((r) => setTimeout(r, 400));
               }
             }
           }
