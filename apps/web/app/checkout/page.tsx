@@ -95,11 +95,13 @@ function ReadyPackageCheckout({ pkgId }: { pkgId: string }) {
       signIn(undefined, { callbackUrl: `/checkout?pkg=${pkgId}` });
       return;
     }
-    if (data.package.isTrial) {
-      setLoading(true);
-      window.location.href = "/dashboard";
-      return;
-    }
+    // Always go through /api/stripe/checkout, even for isTrial/free packages —
+    // that's what actually links this ReadyPackage to the tenant's Subscription
+    // (readyPackageId/readyPackageName/status:"trialing"). It internally skips
+    // Stripe and activates directly whenever the priced amount is zero;
+    // redirecting straight to /dashboard here instead used to skip that link
+    // entirely, leaving the tenant on the generic onboarding-default trial
+    // instead of this package's actual terms (quota, duration, storage).
     setLoading(true);
     try {
       const res = await fetch("/api/stripe/checkout", {
