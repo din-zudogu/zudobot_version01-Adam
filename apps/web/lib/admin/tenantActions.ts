@@ -4,6 +4,7 @@
  * app/api/admin/accounts/[email]/actions/route.ts endpoint, so the two
  * never drift out of sync.
  */
+import mongoose from "mongoose";
 import { UserModel } from "@/lib/db/models/User";
 import { TenantProfileModel } from "@/lib/db/models/TenantProfile";
 import { SubscriptionModel } from "@/lib/db/models/Subscription";
@@ -13,6 +14,12 @@ import { KnowledgeJobModel } from "@/lib/db/models/KnowledgeJob";
 import { ProductModel } from "@/lib/db/models/Product";
 import { NotificationModel } from "@/lib/db/models/Notification";
 import { InvoiceModel } from "@/lib/db/models/Invoice";
+import { KycSubmissionModel } from "@/lib/db/models/KycSubmission";
+import { ChatSessionModel } from "@/lib/db/models/ChatSession";
+import { ZudobotConfig as ZudobotConfigModel } from "@/lib/db/models/ZudobotConfig";
+import { CustomerMemoryModel } from "@/lib/db/models/CustomerMemory";
+import { RagEventLogModel } from "@/lib/db/models/RagEventLog";
+import { VipTenantModel } from "@/lib/db/models/VipTenant";
 import { getStripe } from "@/lib/stripe/client";
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
@@ -41,8 +48,27 @@ export async function softDeleteTenant(tenantId: string): Promise<{ deletionDate
   return { deletionDate: deletionDate.toISOString() };
 }
 
-export async function hardDeleteTenant(tenantId: string): Promise<void> {
+function toOid(id: string): mongoose.Types.ObjectId | null {
+  try { return new mongoose.Types.ObjectId(id); } catch { return null; }
+}
+
+/**
+ * Single source of truth for tenant hard-delete — used by the admin Accounts
+ * panel, the legacy admin/tenants endpoint, and the tenant's own self-service
+ * delete. Mirrors the full collection coverage of api/admin/delete-account
+ * (the most thorough of the three previously-drifted implementations) so no
+ * deletion path leaves KYC submissions, chat history, bot config, memory, or
+ * RAG logs orphaned behind after the User doc is gone.
+ */
+export async function hardDeleteTenant(tenantId: string, email?: string): Promise<void> {
   await cancelStripeSubscription(tenantId);
+
+  const oid = toOid(tenantId);
+  const tenantOrOidQ = oid
+    ? { $or: [{ tenantId }, { tenantId: oid }] }
+    : { tenantId };
+  const vipQ = email ? { $or: [{ email }, { tenantId }] } : { tenantId };
+
   await Promise.all([
     UserModel.deleteOne({ _id: tenantId }),
     TenantProfileModel.deleteOne({ tenantId }),
@@ -53,6 +79,12 @@ export async function hardDeleteTenant(tenantId: string): Promise<void> {
     ProductModel.deleteMany({ tenantId }),
     NotificationModel.deleteMany({ tenantId }),
     InvoiceModel.deleteMany({ tenantId }),
+    KycSubmissionModel.deleteMany({ tenantId }),
+    ChatSessionModel.deleteMany(tenantOrOidQ),
+    ZudobotConfigModel.deleteMany({ tenantId }),
+    CustomerMemoryModel.deleteMany({ tenantId }),
+    RagEventLogModel.deleteMany({ tenantId }),
+    VipTenantModel.deleteMany(vipQ),
   ]);
 }
 

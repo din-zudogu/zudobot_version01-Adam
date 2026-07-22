@@ -5,7 +5,7 @@ import { DeleteAccountModal, type DeleteTarget } from "@/components/admin/Delete
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AccountType = "tenant" | "partner" | "vip" | "admin" | "pending";
+type AccountType = "tenant" | "partner" | "vip" | "admin" | "pending" | "deleted";
 type BotState =
   | "trial" | "trial_quota_daily_exhausted" | "trial_expired" | "active"
   | "grace_5pct" | "suspended_quota" | "suspended_payment" | "pending_kyc" | "disabled";
@@ -19,7 +19,8 @@ interface AccountRow {
   partner?: { partnerId?: string; status: string; isOrphaned: boolean; pendingDeleteAt?: string };
   vip?: { vipId: string; isActive: boolean; endDate?: string; label?: string };
   admin?: { role: string };
-  pending?: { attempts: number; lastAttemptAt: string; wasRegistered: boolean };
+  pending?: { attempts: number; lastAttemptAt: string };
+  deleted?: { deletedAt: string; deletedBy: "self" | "admin"; actorEmail?: string };
 }
 
 interface ApiResponse {
@@ -40,6 +41,7 @@ const TYPE_BADGE: Record<AccountType, string> = {
   vip:     "bg-amber-100   text-amber-800   border-amber-200",
   admin:   "bg-zinc-200    text-zinc-800    border-zinc-300",
   pending: "bg-orange-100  text-orange-800  border-orange-200",
+  deleted: "bg-gray-200    text-gray-700    border-gray-300",
 };
 
 const PAGE_SIZE = 20;
@@ -149,6 +151,7 @@ export default function AdminAccountsPage() {
           <option value="vip">VIP</option>
           <option value="admin">Admin</option>
           <option value="pending">Pending (สมัครไม่สำเร็จ)</option>
+          <option value="deleted">Deleted (ถูกลบออกจากระบบ)</option>
         </select>
       </div>
 
@@ -198,13 +201,22 @@ export default function AdminAccountsPage() {
                         )}
                         {a.pending && (
                           <div>
-                            {a.pending.wasRegistered ? (
-                              <p><span className="text-slate-600 font-semibold">เคยสมัครสำเร็จแล้ว</span> — ถูกลบออกจากระบบภายหลัง</p>
-                            ) : (
-                              <p><span className="text-orange-700 font-semibold">สมัครไม่สำเร็จ</span> — ไม่มีบัญชีในระบบ</p>
-                            )}
+                            <p><span className="text-orange-700 font-semibold">สมัครไม่สำเร็จ</span> — ไม่มีบัญชีในระบบ</p>
                             <p className="text-text-muted">
                               พยายาม {a.pending.attempts} ครั้ง — ล่าสุด {new Date(a.pending.lastAttemptAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        )}
+                        {a.deleted && (
+                          <div>
+                            <p>
+                              <span className="text-gray-700 font-semibold">
+                                {a.deleted.deletedBy === "self" ? "ผู้ใช้งานลบบัญชีสำเร็จ" : "ระบบลบบัญชีสำเร็จ"}
+                              </span>
+                            </p>
+                            <p className="text-text-muted">
+                              {new Date(a.deleted.deletedAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                              {a.deleted.deletedBy === "admin" && a.deleted.actorEmail && ` — โดย ${a.deleted.actorEmail}`}
                             </p>
                           </div>
                         )}

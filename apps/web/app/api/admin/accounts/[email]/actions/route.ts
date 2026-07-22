@@ -191,7 +191,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         return NextResponse.json(result);
       }
       if (user) {
-        await hardDeleteTenant(user._id.toString());
+        await hardDeleteTenant(user._id.toString(), email);
         await logSystemEvent({ category: "admin_action", action, email, actorEmail, details: logDetails });
         return NextResponse.json({ ok: true });
       }

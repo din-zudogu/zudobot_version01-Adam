@@ -18,7 +18,7 @@ import { PartnerProfileModel } from "@/lib/db/models/PartnerProfile";
 import { VipTenantModel } from "@/lib/db/models/VipTenant";
 import { SystemLogModel } from "@/lib/db/models/SystemLog";
 
-type AccountType = "tenant" | "partner" | "vip" | "admin" | "pending";
+type AccountType = "tenant" | "partner" | "vip" | "admin" | "pending" | "deleted";
 
 export async function GET(req: NextRequest) {
   const token = await getServerToken(req);
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Phase 2: batch-fetch + enrich ──────────────────────────────────────────
-  const [users, partners, vips, pendingAgg, signupLogs] = await Promise.all([
+  const [users, partners, vips, pendingAgg, deleteLogs] = await Promise.all([
     UserModel.find({ email: { $in: emails } }).lean(),
     PartnerProfileModel.find({ email: { $in: emails } }).select("-inviteToken -verifyCode").lean(),
     VipTenantModel.find({ email: { $in: emails } }).lean(),
@@ -82,10 +82,31 @@ export async function GET(req: NextRequest) {
       { $group: { _id: "$email", attempts: { $sum: 1 }, lastAttemptAt: { $max: "$createdAt" } } },
     ]),
     // Distinguishes "never completed signup" from "signed up successfully,
-    // account was since removed" — both look identical (no current User doc)
-    // without this, and the former's "สมัครไม่สำเร็จ" label is misleading
-    // for the latter case.
-    SystemLogModel.distinct("email", { category: "auth", action: "signup", email: { $in: emails } }),
+    // account was later hard-deleted" — both look identical (no current
+    // User/Partner/Vip doc) without this, and the pending-registration
+    // "สมัครไม่สำเร็จ" label is misleading for the latter case. Covers both
+    // the self-service delete (bot_state/account_hard_delete_self) and
+    // admin-triggered delete (admin_action/hard_delete) log actions.
+    SystemLogModel.aggregate([
+      {
+        $match: {
+          email: { $in: emails },
+          $or: [
+            { category: "bot_state", action: "account_hard_delete_self" },
+            { category: "admin_action", action: "hard_delete" },
+          ],
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$email",
+          deletedAt: { $first: "$createdAt" },
+          deletedBy: { $first: { $cond: [{ $eq: ["$category", "admin_action"] }, "admin", "self"] } },
+          actorEmail: { $first: "$actorEmail" },
+        },
+      },
+    ]),
   ]);
 
   const userByEmail    = Object.fromEntries(users.map((u) => [u.email.toLowerCase(), u]));
@@ -94,8 +115,9 @@ export async function GET(req: NextRequest) {
   const pendingByEmail = Object.fromEntries(
     pendingAgg.map((p: { _id: string; attempts: number; lastAttemptAt: Date }) => [p._id, p])
   );
-  const previouslyRegisteredEmails = new Set(
-    (signupLogs as string[]).map((e) => e.toLowerCase())
+  const deletedByEmail = Object.fromEntries(
+    (deleteLogs as { _id: string; deletedAt: Date; deletedBy: "self" | "admin"; actorEmail?: string }[])
+      .map((d) => [d._id, d])
   );
 
   let accounts = emails.map((email) => {
@@ -103,16 +125,20 @@ export async function GET(req: NextRequest) {
     const partner = partnerByEmail[email] as (typeof partners)[number] | undefined;
     const vip     = vipByEmail[email] as (typeof vips)[number] | undefined;
     const pending = pendingByEmail[email] as { attempts: number; lastAttemptAt: Date } | undefined;
+    const deleted = deletedByEmail[email] as { deletedAt: Date; deletedBy: "self" | "admin"; actorEmail?: string } | undefined;
 
     const types: AccountType[] = [];
     if (user && (user.role === "tenant" || (user.roles ?? []).includes("tenant"))) types.push("tenant");
     if (partner || user?.role === "partner_admin" || (user?.roles ?? []).includes("partner_admin")) types.push("partner");
     if (vip) types.push("vip");
     if (user && (user.role === "admin" || user.role === "super_admin")) types.push("admin");
-    // Only surface as "pending" when no real account exists at all — an email
-    // that later completed signup keeps its old pending_registration_started
-    // log rows, but shouldn't show a stale "pending" badge once it has a real type.
-    if (types.length === 0 && pending) types.push("pending");
+    // Only surface as "deleted"/"pending" when no real account exists at all —
+    // an email that currently has a real type keeps its historical log rows,
+    // but shouldn't show a stale badge once it has a real type again.
+    if (types.length === 0) {
+      if (deleted) types.push("deleted");
+      else if (pending) types.push("pending");
+    }
 
     return {
       email,
@@ -122,7 +148,11 @@ export async function GET(req: NextRequest) {
       pending: types.includes("pending") && pending ? {
         attempts:      pending.attempts,
         lastAttemptAt: pending.lastAttemptAt,
-        wasRegistered: previouslyRegisteredEmails.has(email),
+      } : undefined,
+      deleted: types.includes("deleted") && deleted ? {
+        deletedAt:  deleted.deletedAt,
+        deletedBy:  deleted.deletedBy,
+        actorEmail: deleted.actorEmail,
       } : undefined,
       tenant: types.includes("tenant") && user ? {
         botState:        user.botState,

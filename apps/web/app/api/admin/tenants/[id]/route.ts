@@ -52,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   if (action === "hard_delete") {
-    await hardDeleteTenant(tenantId);
+    await hardDeleteTenant(tenantId, user.email);
     await logSystemEvent({
       category: "admin_action", action: "hard_delete", email: user.email, actorEmail,
       details: { targetType: "tenant" },

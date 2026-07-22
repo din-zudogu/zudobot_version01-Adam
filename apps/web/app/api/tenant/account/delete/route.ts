@@ -11,46 +11,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerToken } from "@/lib/auth/getServerToken";
 import { connectDB } from "@/lib/db/connect";
 import { UserModel } from "@/lib/db/models/User";
-import { TenantProfileModel } from "@/lib/db/models/TenantProfile";
-import { SubscriptionModel } from "@/lib/db/models/Subscription";
-import { ConversationSessionModel } from "@/lib/db/models/ConversationSession";
-import { KnowledgeChunkModel } from "@/lib/db/models/KnowledgeChunk";
-import { KnowledgeJobModel } from "@/lib/db/models/KnowledgeJob";
-import { ProductModel } from "@/lib/db/models/Product";
-import { NotificationModel } from "@/lib/db/models/Notification";
-import { InvoiceModel } from "@/lib/db/models/Invoice";
-import { getStripe } from "@/lib/stripe/client";
+import { hardDeleteTenant } from "@/lib/admin/tenantActions";
 import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
-
-async function cancelStripeSubscription(tenantId: string) {
-  const sub = await SubscriptionModel.findOne({ tenantId, status: { $in: ["active", "trialing", "past_due"] } });
-  if (!sub?.stripeSubId) return;
-  try {
-    const stripe = getStripe();
-    await stripe.subscriptions.cancel(sub.stripeSubId);
-  } catch (err) {
-    console.error("[account/delete] Stripe cancel failed:", err);
-    // non-fatal — proceed with DB deletion
-  }
-}
-
-async function hardDeleteTenant(tenantId: string) {
-  await cancelStripeSubscription(tenantId);
-
-  await Promise.all([
-    UserModel.deleteOne({ _id: tenantId }),
-    TenantProfileModel.deleteOne({ tenantId }),
-    SubscriptionModel.deleteMany({ tenantId }),
-    ConversationSessionModel.deleteMany({ tenantId }),
-    KnowledgeChunkModel.deleteMany({ tenantId }),
-    KnowledgeJobModel.deleteMany({ tenantId }),
-    ProductModel.deleteMany({ tenantId }),
-    NotificationModel.deleteMany({ tenantId }),
-    InvoiceModel.deleteMany({ tenantId }),
-  ]);
-}
 
 export async function POST(req: NextRequest) {
   const token = await getServerToken(req);
@@ -85,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Hard delete
-    await hardDeleteTenant(tenantId);
+    await hardDeleteTenant(tenantId, email);
     await logSystemEvent({
       category: "bot_state", action: "account_hard_delete_self", email,
     });
