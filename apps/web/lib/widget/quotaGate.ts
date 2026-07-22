@@ -21,6 +21,7 @@ import { NotificationModel } from "@/lib/db/models/Notification";
 import { getPlatformSettings } from "@/lib/db/models/PlatformSettings";
 import { isMemoryLimitExceeded } from "@/lib/memory/memoryService";
 import { logSystemEventAsync } from "@/lib/logging/systemLogger";
+import { applyReadyPackageToTenant } from "@/lib/payment/applyReadyPackage";
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -142,19 +143,41 @@ export async function checkQuota(tenantId: string): Promise<QuotaCheckResult> {
     };
   }
 
-  // 2. Trial expiry
+  // 2. Trial expiry — if the current ready package configures a fallback
+  // package, auto-switch to it (and its terms) instead of expiring, so a
+  // live chat request doesn't get blocked before the next daily cron run.
   if (user.botState === "trial" && user.trialEndsAt && user.trialEndsAt < new Date()) {
-    await UserModel.findByIdAndUpdate(tenantId, { botState: "trial_expired" });
-    logSystemEventAsync({
-      category: "bot_state", action: "bot_state_change", email: user.email,
-      details: { previousState: "trial", nextState: "trial_expired", reason: "trial_ended" },
-    });
-    return {
-      allowed: false,
-      blockMessage: cfg.quotaExhaustedBotMessage,
-      limits: { retentionDays: 0, isTrial: true, isMonthly: false },
-      currentUsage: 0,
-    };
+    const sub = await SubscriptionModel.findOne({ tenantId });
+    const currentPkg = sub?.readyPackageId
+      ? await ReadyPackageModel.findById(sub.readyPackageId).lean()
+      : null;
+    const fallbackPkg = currentPkg?.fallbackPackageId
+      ? await ReadyPackageModel.findOne({ _id: currentPkg.fallbackPackageId, isActive: true }).lean()
+      : null;
+
+    if (fallbackPkg) {
+      await applyReadyPackageToTenant(tenantId, fallbackPkg);
+      logSystemEventAsync({
+        category: "bot_state", action: "bot_state_change", email: user.email,
+        details: {
+          previousState: "trial", nextState: "trial", reason: "fallback_package_applied",
+          fromPackageId: String(currentPkg?._id), toPackageId: String(fallbackPkg._id), toPackageName: fallbackPkg.name,
+        },
+      });
+      // fall through — re-evaluate quota below using the newly applied package
+    } else {
+      await UserModel.findByIdAndUpdate(tenantId, { botState: "trial_expired" });
+      logSystemEventAsync({
+        category: "bot_state", action: "bot_state_change", email: user.email,
+        details: { previousState: "trial", nextState: "trial_expired", reason: "trial_ended" },
+      });
+      return {
+        allowed: false,
+        blockMessage: cfg.quotaExhaustedBotMessage,
+        limits: { retentionDays: 0, isTrial: true, isMonthly: false },
+        currentUsage: 0,
+      };
+    }
   }
 
   const limits = await resolveLimits(tenantId);

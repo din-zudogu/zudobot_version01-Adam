@@ -16,8 +16,10 @@ import { UserModel } from "@/lib/db/models/User";
 import { TenantProfileModel } from "@/lib/db/models/TenantProfile";
 import { SubscriptionModel } from "@/lib/db/models/Subscription";
 import { PartnerProfileModel } from "@/lib/db/models/PartnerProfile";
+import { ReadyPackageModel } from "@/lib/db/models/ReadyPackage";
 import { getPlatformSettings } from "@/lib/db/models/PlatformSettings";
 import { evaluateBotState, type BotStateContext } from "./botStateMachine";
+import { applyReadyPackageToTenant } from "./applyReadyPackage";
 import { dailyCapForPlan, DEFAULT_PM_CONFIG, type PlanId, PLAN_CATALOG, MEMORY_ADDON_CATALOG, RETENTION_ADDON_CATALOG, type MemoryAddonId, type RetentionAddonId } from "./pmRules";
 import { cleanupExpiredSessions, getTenantsWithExpiringData } from "@/lib/memory/memoryService";
 import { createNotification, notificationSentToday } from "@/lib/notifications/notificationService";
@@ -65,13 +67,37 @@ export async function runDailyCheck(now = new Date()): Promise<DailyCheckResult>
   });
 
   for (const user of expiredTrials) {
+    const tid = user._id.toString();
+
+    // If the tenant's current ready package configures a fallback package,
+    // auto-switch to it and apply its terms instead of expiring.
+    const sub = await SubscriptionModel.findOne({ tenantId: tid });
+    const currentPkg = sub?.readyPackageId
+      ? await ReadyPackageModel.findById(sub.readyPackageId).lean()
+      : null;
+    const fallbackPkg = currentPkg?.fallbackPackageId
+      ? await ReadyPackageModel.findOne({ _id: currentPkg.fallbackPackageId, isActive: true }).lean()
+      : null;
+
+    if (fallbackPkg) {
+      await applyReadyPackageToTenant(tid, fallbackPkg);
+      logSystemEventAsync({
+        category: "bot_state", action: "bot_state_change", email: user.email,
+        details: {
+          previousState: user.botState, nextState: "trial", reason: "fallback_package_applied",
+          fromPackageId: String(currentPkg?._id), toPackageId: String(fallbackPkg._id), toPackageName: fallbackPkg.name,
+        },
+      });
+      result.stateTransitions++;
+      continue;
+    }
+
     await UserModel.findByIdAndUpdate(user._id, { botState: "trial_expired" });
     logSystemEventAsync({
       category: "bot_state", action: "bot_state_change", email: user.email,
       details: { previousState: user.botState, nextState: "trial_expired", reason: "trial_ended" },
     });
     // Notify tenant
-    const tid = user._id.toString();
     if (!(await notificationSentToday(tid, "trial_expired"))) {
       await createNotification(tid, "trial_expired",
         "ระยะเวลาทดลองใช้หมดแล้ว",

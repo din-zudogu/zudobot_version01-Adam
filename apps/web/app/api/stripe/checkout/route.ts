@@ -15,6 +15,7 @@ import {
 import { ReadyPackageModel } from "@/lib/db/models/ReadyPackage";
 import { CostPriceScenarioModel } from "@/lib/db/models/CostPriceScenario";
 import { countReadyPackageUsageOne, isNewShop } from "@/lib/payment/readyPackageUsage";
+import { applyReadyPackageToTenant } from "@/lib/payment/applyReadyPackage";
 
 // ── Body shapes ───────────────────────────────────────────────────────────────
 
@@ -127,31 +128,10 @@ export async function POST(req: NextRequest) {
 
       const amountThb = (pkg.finalRetailPrice ?? 0) + addonTotal;
       if (amountThb <= 0) {
-        // Trial / free package — activate directly without Stripe.
-        // บันทึก link แพคเกจไว้บน subscription เพื่อให้นับโควต้าร้านค้าได้
-        await SubscriptionModel.findOneAndUpdate(
-          { tenantId },
-          {
-            readyPackageId:   packageId,
-            readyPackageName: pkg.name,
-            ...(pkg.isTrial ? { status: "trialing" } : {}),
-          },
-          { upsert: true },
-        );
-        // Onboarding always sets a generic 14-day trialEndsAt regardless of
-        // which package the tenant actually signed up for — override it here
-        // with this specific package's own trial duration (e.g. 365 days for
-        // a "LIFE TIME" package) now that we know which one was chosen.
-        // A lifetime package clears trialEndsAt entirely instead — every
-        // expiry check (quotaGate, dailyCheck cron, botStateMachine) only
-        // acts when trialEndsAt is set, so an unset value never expires.
-        if (pkg.isLifetime) {
-          await UserModel.findByIdAndUpdate(tenantId, { $unset: { trialEndsAt: 1 } });
-        } else if (pkg.isTrial && pkg.trialDays) {
-          await UserModel.findByIdAndUpdate(tenantId, {
-            trialEndsAt: new Date(Date.now() + pkg.trialDays * 24 * 60 * 60 * 1000),
-          });
-        }
+        // Trial / free package — activate directly without Stripe. Also
+        // overrides onboarding's generic 14-day trialEndsAt default with
+        // this specific package's own terms (or clears it for lifetime).
+        await applyReadyPackageToTenant(tenantId, pkg);
         return NextResponse.json({ url: "/dashboard/overview?trial=1" });
       }
 

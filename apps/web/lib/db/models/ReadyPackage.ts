@@ -48,6 +48,12 @@ export interface IReadyPackage extends Document {
   trialDays?: number;
   /** ตลอดชีพ — ไม่มีวันหมดอายุ เมื่อสมัคร (independent — ไม่ผูกกับ isTrial) */
   isLifetime?: boolean;
+  /**
+   * เมื่อวันทดลองใช้ของแพคเกจนี้หมดอายุ (isLifetime=false เท่านั้น) ระบบจะ
+   * auto เปลี่ยนร้านค้าไปใช้ ReadyPackage นี้แทน แล้วนำเงื่อนไขของมันมาใช้
+   * — ถ้าไม่ระบุ พฤติกรรมเดิม (trial_expired) ยังใช้เหมือนเดิม
+   */
+  fallbackPackageId?: mongoose.Types.ObjectId;
   /** อนุญาตให้ Partner ขายได้หรือไม่ */
   isPartnerAllowed: boolean;
   /**
@@ -100,6 +106,7 @@ const ReadyPackageSchema = new Schema<IReadyPackage>(
     isTrial:           { type: Boolean, default: false },
     trialDays:         { type: Number },
     isLifetime:        { type: Boolean, default: false },
+    fallbackPackageId: { type: Schema.Types.ObjectId, ref: "ReadyPackage" },
     isPartnerAllowed:  { type: Boolean, default: true },
     maxShops:          { type: Number, default: 0, min: 0 },
     newShopsOnly:      { type: Boolean, default: false },

@@ -82,6 +82,8 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       update.isLifetime  = isLifetime;
       update.trialDays   = isTrial && !isLifetime && body.trialDays != null
         ? Math.max(1, Math.min(365, Number(body.trialDays) || 14)) : undefined;
+      update.fallbackPackageId = isTrial && !isLifetime && typeof body.fallbackPackageId === "string"
+        && mongoose.isValidObjectId(body.fallbackPackageId) ? body.fallbackPackageId : undefined;
     }
     if (body.isPartnerAllowed != null) {
       update.isPartnerAllowed = body.isPartnerAllowed !== false;

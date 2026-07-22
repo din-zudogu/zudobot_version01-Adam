@@ -45,6 +45,8 @@ export type ReadyPackageDoc = {
   trialDays?: number;
   /** ตลอดชีพ — ไม่มีวันหมดอายุ (เมื่อ isTrial=true เท่านั้น) */
   isLifetime?: boolean;
+  /** เมื่อวันทดลองใช้หมดอายุ — แพคเกจที่จะ auto เปลี่ยนไปใช้แทน */
+  fallbackPackageId?: string;
   isPartnerAllowed: boolean;
   /** โควต้าจำนวนร้านค้าที่ใช้ได้ — 0 = ไม่จำกัด */
   maxShops?: number;
@@ -67,6 +69,7 @@ type SavePayload = {
   isTrial: boolean;
   trialDays?: number;
   isLifetime?: boolean;
+  fallbackPackageId?: string;
   isPartnerAllowed: boolean;
   maxShops: number;
   newShopsOnly: boolean;
@@ -108,6 +111,7 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
   const [isTrial, setIsTrial]           = useState(initial?.isTrial ?? false);
   const [trialDays, setTrialDays]       = useState<number>(initial?.trialDays ?? 14);
   const [isLifetime, setIsLifetime]     = useState<boolean>(initial?.isLifetime ?? false);
+  const [fallbackPackageId, setFallbackPackageId] = useState<string>(initial?.fallbackPackageId ?? "");
   const [isPartnerAllowed, setIsPartnerAllowed] = useState(initial?.isPartnerAllowed ?? true);
   const [maxShops, setMaxShops]   = useState<number>(initial?.maxShops ?? 0);
   const [newShopsOnly, setNewShopsOnly] = useState<boolean>(initial?.newShopsOnly ?? false);
@@ -115,6 +119,8 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
   const [sortOrder, setSortOrder] = useState(initial?.sortOrder ?? 0);
   const [saving, setSaving]       = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showTypeConfirm, setShowTypeConfirm] = useState(false);
+  const [typeConfirmText, setTypeConfirmText] = useState("");
   const [guideProfitPct, setGuideProfitPct] = useState(40);
 
   const [items, setItems] = useState<ReadyPackageItem[]>(
@@ -247,6 +253,7 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
       isTrial,
       trialDays: isTrial && !isLifetime ? trialDays : undefined,
       isLifetime,
+      fallbackPackageId: isTrial && !isLifetime && fallbackPackageId ? fallbackPackageId : undefined,
       isPartnerAllowed,
       maxShops: Math.max(0, Math.floor(maxShops || 0)),
       newShopsOnly,
@@ -254,17 +261,23 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
     };
   }
 
-  async function handleSaveClick() {
+  function handleSaveClick() {
     if (!canSave) return;
-    // Trial: ราคา 0 คือตั้งใจ — ไม่ต้องถามยืนยัน
+    // Trial: ราคา 0 คือตั้งใจ — ไม่ต้องถามยืนยันราคาก่อน แต่ยังต้อง type-confirm อยู่ดี
     if (!isTrial && isPriceModified) { setShowConfirm(true); return; }
-    setSaving(true);
-    await onSave(buildPayload());
-    setSaving(false);
+    setTypeConfirmText("");
+    setShowTypeConfirm(true);
   }
 
-  async function handleConfirmSave() {
+  function handleConfirmSave() {
     setShowConfirm(false);
+    setTypeConfirmText("");
+    setShowTypeConfirm(true);
+  }
+
+  async function handleTypeConfirmSave() {
+    if (typeConfirmText.trim().toLowerCase() !== "confirm") return;
+    setShowTypeConfirm(false);
     setSaving(true);
     await onSave(buildPayload());
     setSaving(false);
@@ -369,6 +382,33 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
                   <span className="text-xs text-amber-600">
                     (~{Math.round(trialDays / 30 * 10) / 10} เดือน)
                   </span>
+                </div>
+              )}
+              {isTrial && (
+                <div className="pl-7 space-y-1">
+                  <label className="text-xs font-medium text-amber-800 block">
+                    เมื่อหมดอายุทดลองใช้ — เปลี่ยนไปแพคเกจ (ถ้าระบุ)
+                  </label>
+                  <select
+                    value={fallbackPackageId}
+                    disabled={isLifetime}
+                    onChange={(e) => setFallbackPackageId(e.target.value)}
+                    className={`w-full max-w-sm border rounded-lg px-3 py-1.5 text-sm ${
+                      isLifetime ? "bg-surface-secondary border-border-default text-text-muted cursor-not-allowed" : "bg-white border-amber-300"
+                    }`}
+                  >
+                    <option value="">— ไม่ระบุ (หมดอายุตามปกติ) —</option>
+                    {existingPackages
+                      .filter((p) => p.isActive && p._id !== initial?._id)
+                      .map((p) => (
+                        <option key={p._id} value={p._id}>{p.name}</option>
+                      ))}
+                  </select>
+                  <p className="text-[10px] text-amber-600">
+                    {isLifetime
+                      ? "ปิดใช้งานเพราะแพคเกจนี้เป็นตลอดชีพ ไม่มีวันหมดอายุ"
+                      : "เมื่อครบกำหนดวันทดลองใช้ ระบบจะเปลี่ยนร้านค้าไปใช้แพคเกจที่เลือกนี้แทนอัตโนมัติ"}
+                  </p>
                 </div>
               )}
             </div>
@@ -719,7 +759,7 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
               className="px-4 py-2 rounded-xl border border-border-default text-sm text-text-secondary">
               ยกเลิก
             </button>
-            <button type="button" disabled={saving || !canSave} onClick={() => void handleSaveClick()}
+            <button type="button" disabled={saving || !canSave} onClick={handleSaveClick}
               className="px-5 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-50">
               {saving ? "กำลังบันทึก..." : mode === "create" ? "สร้างแพคเกจ" : "บันทึก"}
             </button>
@@ -781,9 +821,44 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
                 className="px-4 py-2 rounded-xl border border-border-default text-sm text-text-secondary">
                 ← กลับไปแก้ไข
               </button>
-              <button type="button" onClick={() => void handleConfirmSave()}
+              <button type="button" onClick={handleConfirmSave}
                 className="px-5 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700">
                 ✓ ยืนยัน บันทึกราคานี้
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Type-to-confirm Save Dialog ──────────────────────────── */}
+      {showTypeConfirm && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] px-4">
+          <div className="bg-white rounded-2xl border border-border-default shadow-card w-full max-w-md p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <h3 className="font-heading font-bold text-text-primary text-lg">ยืนยันการบันทึก</h3>
+              <button type="button" onClick={() => setShowTypeConfirm(false)}
+                className="text-xl text-text-muted hover:text-text-primary leading-none">×</button>
+            </div>
+            <p className="text-sm text-text-secondary">
+              ท่านยืนยันบันทึกข้อมูลชุดนี้ใช่หรือไม่ หากยืนยัน กรุณาพิมพ์คำว่า <strong>confirm</strong> แล้วคลิกปุ่มยืนยัน
+            </p>
+            <input
+              type="text"
+              value={typeConfirmText}
+              onChange={(e) => setTypeConfirmText(e.target.value)}
+              placeholder="พิมพ์ confirm"
+              autoFocus
+              className="w-full bg-surface-secondary border border-border-default rounded-lg px-3 py-2 text-sm font-mono"
+            />
+            <div className="flex justify-end gap-3 pt-1">
+              <button type="button" onClick={() => setShowTypeConfirm(false)}
+                className="px-4 py-2 rounded-xl border border-border-default text-sm text-text-secondary">
+                ปิด
+              </button>
+              <button type="button" disabled={typeConfirmText.trim().toLowerCase() !== "confirm"}
+                onClick={() => void handleTypeConfirmSave()}
+                className="px-5 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                ✓ ยืนยัน
               </button>
             </div>
           </div>

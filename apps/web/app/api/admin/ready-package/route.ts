@@ -174,6 +174,8 @@ export async function POST(req: NextRequest) {
     const isLifetime = body.isLifetime === true;
     const trialDays  = isTrial && !isLifetime && body.trialDays != null
       ? Math.max(1, Math.min(365, Number(body.trialDays) || 14)) : undefined;
+    const fallbackPackageId = isTrial && !isLifetime && typeof body.fallbackPackageId === "string"
+      && mongoose.isValidObjectId(body.fallbackPackageId) ? body.fallbackPackageId : undefined;
 
     const isPartnerAllowed = body.isPartnerAllowed !== false; // default true
 
@@ -192,6 +194,7 @@ export async function POST(req: NextRequest) {
       isTrial,
       trialDays,
       isLifetime,
+      fallbackPackageId,
       isPartnerAllowed,
       maxShops,
       newShopsOnly,
