@@ -98,12 +98,16 @@ function AuthRedirectInner() {
       syncStarted.current = true;
 
       void (async () => {
+        const alreadyReloaded = sessionStorage.getItem("zudo-pending-reload") === "1";
+        console.log("[zudo-redirect] pending branch start, alreadyReloaded=", alreadyReloaded);
         try {
           const check = await fetch("/api/auth/sync-registration", {
             credentials: "include",
           });
+          console.log("[zudo-redirect] sync-registration status=", check.status, check.ok);
           if (check.ok) {
             const data = (await check.json()) as { registered?: boolean };
+            console.log("[zudo-redirect] sync-registration body=", data);
             if (data.registered) {
               // The User row exists (onboarding/complete already succeeded).
               // update() writes a new JWT cookie via the jwt() callback, but
@@ -114,19 +118,27 @@ function AuthRedirectInner() {
               // on a real request, sidestepping the client-side session hook
               // entirely. Guard with sessionStorage so a genuine failure
               // (cookie never updated) doesn't reload forever.
-              await updateRef.current();
-              const alreadyReloaded = sessionStorage.getItem("zudo-pending-reload") === "1";
+              const updateResult = await updateRef.current();
+              console.log("[zudo-redirect] update() resolved, new session role=",
+                (updateResult as { user?: { role?: string } } | null)?.user?.role);
               if (!alreadyReloaded) {
                 sessionStorage.setItem("zudo-pending-reload", "1");
+                console.log("[zudo-redirect] forcing window.location.reload()");
                 window.location.reload();
                 return;
               }
+              console.log("[zudo-redirect] already reloaded once and STILL pending — falling through to /auth/new-user");
               sessionStorage.removeItem("zudo-pending-reload");
+            } else {
+              console.log("[zudo-redirect] registered=false — DB says no User doc yet");
             }
+          } else {
+            console.log("[zudo-redirect] sync-registration NOT ok, body=", await check.text().catch(() => "<unreadable>"));
           }
-        } catch {
-          // fall through
+        } catch (err) {
+          console.log("[zudo-redirect] pending branch threw:", err);
         }
+        console.log("[zudo-redirect] falling through to router.replace('/auth/new-user')");
         router.replace("/auth/new-user");
       })();
       return;
