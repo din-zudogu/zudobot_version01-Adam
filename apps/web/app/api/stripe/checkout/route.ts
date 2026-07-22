@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
             trialEndsAt: new Date(Date.now() + pkg.trialDays * 24 * 60 * 60 * 1000),
           });
         }
-        return NextResponse.json({ url: "/dashboard?trial=1" });
+        return NextResponse.json({ url: "/dashboard/overview?trial=1" });
       }
 
       const url = await createCustomAmountCheckoutSession({

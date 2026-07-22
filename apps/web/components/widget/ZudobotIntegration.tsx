@@ -307,7 +307,7 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
     <div className="max-w-3xl space-y-6">
       <nav className="text-sm text-text-muted" aria-label="นำทาง">
         <Link
-          href="/dashboard"
+          href="/dashboard/overview"
           className="text-brand-600 hover:underline"
           onClick={(e) => {
             if (!confirmLeaveWhenDirty(isDomainDirty)) e.preventDefault();
@@ -512,7 +512,7 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
 
         <button
           type="button"
-          onClick={() => guardedNavigate("/dashboard")}
+          onClick={() => guardedNavigate("/dashboard/overview")}
           className="text-sm text-text-muted hover:text-text-primary border border-border-default px-4 py-2 rounded-lg"
         >
           ← ย้อนกลับหน้าหลัก
