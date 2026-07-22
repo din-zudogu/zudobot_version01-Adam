@@ -44,8 +44,10 @@ export interface IReadyPackage extends Document {
   isOnSale: boolean;
   /** แพคเกจทดลองใช้ */
   isTrial: boolean;
-  /** จำนวนวันทดลองใช้ (เมื่อ isTrial=true) */
+  /** จำนวนวันทดลองใช้ (เมื่อ isTrial=true) — ไม่มีผลถ้า isLifetime=true */
   trialDays?: number;
+  /** ตลอดชีพ — ไม่มีวันหมดอายุ (เมื่อ isTrial=true เท่านั้น) */
+  isLifetime?: boolean;
   /** อนุญาตให้ Partner ขายได้หรือไม่ */
   isPartnerAllowed: boolean;
   /**
@@ -97,6 +99,7 @@ const ReadyPackageSchema = new Schema<IReadyPackage>(
     isOnSale:          { type: Boolean, default: false },
     isTrial:           { type: Boolean, default: false },
     trialDays:         { type: Number },
+    isLifetime:        { type: Boolean, default: false },
     isPartnerAllowed:  { type: Boolean, default: true },
     maxShops:          { type: Number, default: 0, min: 0 },
     newShopsOnly:      { type: Boolean, default: false },

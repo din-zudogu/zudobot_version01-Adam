@@ -163,12 +163,20 @@ export default function DashboardOverviewPage() {
         {/* Trial / Billing Card */}
         <div className="bg-surface-primary border border-border-default rounded-2xl p-5">
           {!isPaidPlan ? (
-            <>
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">ระยะเวลาทดลอง</p>
-              <p className="text-2xl font-bold text-text-primary mb-1">{trialDays} วัน</p>
-              <p className="text-sm text-text-muted">ที่เหลืออยู่</p>
-              <p className="text-xs text-text-muted mt-1">ถึง {thDate(me.user.trialEndsAt)}</p>
-            </>
+            me.user.trialEndsAt ? (
+              <>
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">ระยะเวลาทดลอง</p>
+                <p className="text-2xl font-bold text-text-primary mb-1">{trialDays} วัน</p>
+                <p className="text-sm text-text-muted">ที่เหลืออยู่</p>
+                <p className="text-xs text-text-muted mt-1">ถึง {thDate(me.user.trialEndsAt)}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">ระยะเวลาใช้งาน</p>
+                <p className="text-2xl font-bold text-text-primary mb-1">ตลอดชีพ</p>
+                <p className="text-sm text-text-muted">ไม่มีวันหมดอายุ</p>
+              </>
+            )
           ) : (
             <>
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">รอบบิลถัดไป</p>

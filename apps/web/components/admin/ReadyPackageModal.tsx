@@ -43,6 +43,8 @@ export type ReadyPackageDoc = {
   isOnSale: boolean;
   isTrial: boolean;
   trialDays?: number;
+  /** ตลอดชีพ — ไม่มีวันหมดอายุ (เมื่อ isTrial=true เท่านั้น) */
+  isLifetime?: boolean;
   isPartnerAllowed: boolean;
   /** โควต้าจำนวนร้านค้าที่ใช้ได้ — 0 = ไม่จำกัด */
   maxShops?: number;
@@ -64,6 +66,7 @@ type SavePayload = {
   isOnSale: boolean;
   isTrial: boolean;
   trialDays?: number;
+  isLifetime?: boolean;
   isPartnerAllowed: boolean;
   maxShops: number;
   newShopsOnly: boolean;
@@ -104,6 +107,7 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
   const [isOnSale, setIsOnSale]   = useState(initial?.isOnSale ?? true);
   const [isTrial, setIsTrial]           = useState(initial?.isTrial ?? false);
   const [trialDays, setTrialDays]       = useState<number>(initial?.trialDays ?? 14);
+  const [isLifetime, setIsLifetime]     = useState<boolean>(initial?.isLifetime ?? false);
   const [isPartnerAllowed, setIsPartnerAllowed] = useState(initial?.isPartnerAllowed ?? true);
   const [maxShops, setMaxShops]   = useState<number>(initial?.maxShops ?? 0);
   const [newShopsOnly, setNewShopsOnly] = useState<boolean>(initial?.newShopsOnly ?? false);
@@ -188,6 +192,7 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
       setPartnerInput(String(auto.autoPartner));
       setUserModifiedRetail(false);
       setUserModifiedPartner(false);
+      setIsLifetime(false);
     }
   }
 
@@ -241,7 +246,8 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
       isActive,
       isOnSale,
       isTrial,
-      trialDays: isTrial ? trialDays : undefined,
+      trialDays: isTrial && !isLifetime ? trialDays : undefined,
+      isLifetime: isTrial ? isLifetime : undefined,
       isPartnerAllowed,
       maxShops: Math.max(0, Math.floor(maxShops || 0)),
       newShopsOnly,
@@ -350,20 +356,34 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
                 </div>
               </label>
               {isTrial && (
-                <div className="flex items-center gap-3 pl-7">
-                  <label className="text-xs font-medium text-amber-800 shrink-0">จำนวนวันทดลองใช้</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={365}
-                    value={trialDays}
-                    onChange={(e) => setTrialDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="w-24 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-mono"
-                  />
-                  <span className="text-sm font-semibold text-amber-800">วัน</span>
-                  <span className="text-xs text-amber-600">
-                    (~{Math.round(trialDays / 30 * 10) / 10} เดือน)
-                  </span>
+                <div className="pl-7 space-y-2">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={isLifetime} onChange={(e) => setIsLifetime(e.target.checked)}
+                      className="accent-amber-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-800">ตลอดชีพ (Lifetime) — ไม่มีวันหมดอายุ</p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        ทำงานได้ตลอดไป ไม่นับวันหมดอายุ — ไม่สนใจจำนวนวันทดลองใช้ด้านล่าง
+                      </p>
+                    </div>
+                  </label>
+                  {!isLifetime && (
+                    <div className="flex items-center gap-3">
+                      <label className="text-xs font-medium text-amber-800 shrink-0">จำนวนวันทดลองใช้</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={trialDays}
+                        onChange={(e) => setTrialDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                        className="w-24 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-mono"
+                      />
+                      <span className="text-sm font-semibold text-amber-800">วัน</span>
+                      <span className="text-xs text-amber-600">
+                        (~{Math.round(trialDays / 30 * 10) / 10} เดือน)
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

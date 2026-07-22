@@ -142,7 +142,12 @@ export async function POST(req: NextRequest) {
         // which package the tenant actually signed up for — override it here
         // with this specific package's own trial duration (e.g. 365 days for
         // a "LIFE TIME" package) now that we know which one was chosen.
-        if (pkg.isTrial && pkg.trialDays) {
+        // A lifetime package clears trialEndsAt entirely instead — every
+        // expiry check (quotaGate, dailyCheck cron, botStateMachine) only
+        // acts when trialEndsAt is set, so an unset value never expires.
+        if (pkg.isTrial && pkg.isLifetime) {
+          await UserModel.findByIdAndUpdate(tenantId, { $unset: { trialEndsAt: 1 } });
+        } else if (pkg.isTrial && pkg.trialDays) {
           await UserModel.findByIdAndUpdate(tenantId, {
             trialEndsAt: new Date(Date.now() + pkg.trialDays * 24 * 60 * 60 * 1000),
           });

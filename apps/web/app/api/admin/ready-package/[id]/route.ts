@@ -76,8 +76,11 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         ? Number(body.finalPartnerPrice) : undefined;
     }
     if (body.isTrial != null) {
-      update.isTrial = body.isTrial === true;
-      update.trialDays = body.isTrial === true && body.trialDays != null
+      const isTrial    = body.isTrial === true;
+      const isLifetime = isTrial && body.isLifetime === true;
+      update.isTrial     = isTrial;
+      update.isLifetime  = isLifetime;
+      update.trialDays   = isTrial && !isLifetime && body.trialDays != null
         ? Math.max(1, Math.min(365, Number(body.trialDays) || 14)) : undefined;
     }
     if (body.isPartnerAllowed != null) {

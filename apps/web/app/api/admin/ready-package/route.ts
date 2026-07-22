@@ -170,8 +170,9 @@ export async function POST(req: NextRequest) {
     const finalPartnerPrice = body.finalPartnerPrice != null && Number.isFinite(Number(body.finalPartnerPrice))
       ? Number(body.finalPartnerPrice) : undefined;
 
-    const isTrial  = body.isTrial === true;
-    const trialDays = isTrial && body.trialDays != null
+    const isTrial    = body.isTrial === true;
+    const isLifetime = isTrial && body.isLifetime === true;
+    const trialDays  = isTrial && !isLifetime && body.trialDays != null
       ? Math.max(1, Math.min(365, Number(body.trialDays) || 14)) : undefined;
 
     const isPartnerAllowed = body.isPartnerAllowed !== false; // default true
@@ -190,6 +191,7 @@ export async function POST(req: NextRequest) {
       isOnSale,
       isTrial,
       trialDays,
+      isLifetime,
       isPartnerAllowed,
       maxShops,
       newShopsOnly,
