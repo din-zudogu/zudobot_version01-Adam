@@ -9,7 +9,7 @@ interface MeData {
   profile: { businessName: string; botName: string; embedKey: string; widgetEnabled: boolean; dailyMessageCount: number; totalMessageCount: number };
   subscription: { planId: string; status: string; currentPeriodEnd: string | null; totalThb: number } | null;
   plan: { id: string; label: string; msgPerDay?: number; memoryMb?: number; retentionDays?: number; priceThb: number; memoryLabel?: string; retentionLabel?: string };
-  quota: { used: number; limit: number; percent: number; resetAt: string | null };
+  quota: { used: number; limit: number; percent: number; resetAt: string | null; isMonthly?: boolean };
 }
 
 const BOT_STATE: Record<string, { label: string; hint: string; color: string; dot: string }> = {
@@ -118,7 +118,9 @@ export default function DashboardOverviewPage() {
 
         {/* Quota Card */}
         <div className="bg-surface-primary border border-border-default rounded-2xl p-5">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">โควต้าวันนี้</p>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+            {me.quota.isMonthly ? "โควต้าเดือนนี้" : "โควต้าวันนี้"}
+          </p>
           <div className="flex items-end gap-1 mb-3">
             <span className="text-2xl font-bold text-text-primary">{me.quota.used.toLocaleString()}</span>
             <span className="text-text-muted text-sm mb-0.5">

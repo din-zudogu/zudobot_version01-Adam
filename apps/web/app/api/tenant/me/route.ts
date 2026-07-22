@@ -6,6 +6,7 @@ import { UserModel } from "@/lib/db/models/User";
 import { TenantProfileModel } from "@/lib/db/models/TenantProfile";
 import { SubscriptionModel } from "@/lib/db/models/Subscription";
 import { PackageConfigModel } from "@/lib/db/models/PackageConfig";
+import { ReadyPackageModel } from "@/lib/db/models/ReadyPackage";
 import { getPlatformSettings } from "@/lib/db/models/PlatformSettings";
 import { ensureTenantProfileForUser } from "@/lib/tenant/ensureTenantProfile";
 import { VipTenantModel } from "@/lib/db/models/VipTenant";
@@ -67,6 +68,7 @@ export async function GET(req: NextRequest) {
     let planRetentionDays: number | undefined;
     let memoryLabel: string | undefined;
     let retentionLabel: string | undefined;
+    let isMonthlyQuota = false;
 
     if (sub && sub.planId !== "trial") {
       const [planPkg, memPkg, retPkg] = await Promise.all([
@@ -82,9 +84,25 @@ export async function GET(req: NextRequest) {
       }
       if (memPkg) { planMemoryMb = memPkg.memoryMb ?? undefined; memoryLabel = memPkg.label; }
       if (retPkg) { planRetentionDays = retPkg.retentionDays ?? undefined; retentionLabel = retPkg.label; }
+    } else if (sub?.readyPackageId) {
+      // Trial subscription linked to a specific ready package (e.g. "ZUDOBOT
+      // FREE - LIFE TIME") — show that package's own quota/name instead of
+      // the generic platform trial default, matching quotaGate.ts's
+      // resolveLimits() so the dashboard and the actual chat gate agree.
+      const pkg = await ReadyPackageModel.findById(sub.readyPackageId).lean();
+      const aiBaseItem  = pkg?.items.find((i) => i.plan.toLowerCase().includes("ai base"));
+      const expiredItem = pkg?.items.find((i) => i.plan.toLowerCase().includes("expired"));
+      if (aiBaseItem?.messageCount != null) {
+        quotaLimit        = aiBaseItem.messageCount;
+        planLabel         = sub.readyPackageName ?? pkg?.name ?? "Trial";
+        planRetentionDays = expiredItem?.storageExpireDays;
+        isMonthlyQuota    = true;
+      }
     }
 
-    const quotaUsed = profile?.dailyMessageCount ?? 0;
+    const quotaUsed = isMonthlyQuota
+      ? (profile?.monthlyMessageCount ?? 0)
+      : (profile?.dailyMessageCount ?? 0);
 
     return NextResponse.json({
       tenantId,
@@ -135,10 +153,11 @@ export async function GET(req: NextRequest) {
         retentionLabel,
       },
       quota: {
-        used:    quotaUsed,
-        limit:   quotaLimit < 0 ? -1 : quotaLimit,
-        percent: quotaLimit <= 0 ? 0 : Math.min(100, Math.round((quotaUsed / quotaLimit) * 100)),
-        resetAt: profile?.dailyMessageResetAt ?? null,
+        used:      quotaUsed,
+        limit:     quotaLimit < 0 ? -1 : quotaLimit,
+        percent:   quotaLimit <= 0 ? 0 : Math.min(100, Math.round((quotaUsed / quotaLimit) * 100)),
+        resetAt:   isMonthlyQuota ? (profile?.monthlyMessageResetAt ?? null) : (profile?.dailyMessageResetAt ?? null),
+        isMonthly: isMonthlyQuota,
       },
       settings: {
         widgetCdnBase:  cfg.widgetCdnBaseUrl,
