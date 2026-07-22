@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
       ? Number(body.finalPartnerPrice) : undefined;
 
     const isTrial    = body.isTrial === true;
-    const isLifetime = isTrial && body.isLifetime === true;
+    const isLifetime = body.isLifetime === true;
     const trialDays  = isTrial && !isLifetime && body.trialDays != null
       ? Math.max(1, Math.min(365, Number(body.trialDays) || 14)) : undefined;
 

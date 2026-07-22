@@ -77,7 +77,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     }
     if (body.isTrial != null) {
       const isTrial    = body.isTrial === true;
-      const isLifetime = isTrial && body.isLifetime === true;
+      const isLifetime = body.isLifetime === true;
       update.isTrial     = isTrial;
       update.isLifetime  = isLifetime;
       update.trialDays   = isTrial && !isLifetime && body.trialDays != null

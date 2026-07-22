@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
         // A lifetime package clears trialEndsAt entirely instead — every
         // expiry check (quotaGate, dailyCheck cron, botStateMachine) only
         // acts when trialEndsAt is set, so an unset value never expires.
-        if (pkg.isTrial && pkg.isLifetime) {
+        if (pkg.isLifetime) {
           await UserModel.findByIdAndUpdate(tenantId, { $unset: { trialEndsAt: 1 } });
         } else if (pkg.isTrial && pkg.trialDays) {
           await UserModel.findByIdAndUpdate(tenantId, {

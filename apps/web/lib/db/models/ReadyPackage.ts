@@ -46,7 +46,7 @@ export interface IReadyPackage extends Document {
   isTrial: boolean;
   /** จำนวนวันทดลองใช้ (เมื่อ isTrial=true) — ไม่มีผลถ้า isLifetime=true */
   trialDays?: number;
-  /** ตลอดชีพ — ไม่มีวันหมดอายุ (เมื่อ isTrial=true เท่านั้น) */
+  /** ตลอดชีพ — ไม่มีวันหมดอายุ เมื่อสมัคร (independent — ไม่ผูกกับ isTrial) */
   isLifetime?: boolean;
   /** อนุญาตให้ Partner ขายได้หรือไม่ */
   isPartnerAllowed: boolean;

@@ -187,12 +187,11 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
       setUserModifiedRetail(false);
       setUserModifiedPartner(false);
     } else {
-      // ปลด Trial → คืน auto price
+      // ปลด Trial → คืน auto price (isLifetime เป็นอิสระจาก Trial ไม่ต้อง reset)
       setRetailInput(String(auto.autoRetail));
       setPartnerInput(String(auto.autoPartner));
       setUserModifiedRetail(false);
       setUserModifiedPartner(false);
-      setIsLifetime(false);
     }
   }
 
@@ -247,7 +246,7 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
       isOnSale,
       isTrial,
       trialDays: isTrial && !isLifetime ? trialDays : undefined,
-      isLifetime: isTrial ? isLifetime : undefined,
+      isLifetime,
       isPartnerAllowed,
       maxShops: Math.max(0, Math.floor(maxShops || 0)),
       newShopsOnly,
@@ -355,37 +354,37 @@ export function ReadyPackageModal({ mode, initial, scenarios, existingPackages =
                   </p>
                 </div>
               </label>
-              {isTrial && (
-                <div className="pl-7 space-y-2">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={isLifetime} onChange={(e) => setIsLifetime(e.target.checked)}
-                      className="accent-amber-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-amber-800">ตลอดชีพ (Lifetime) — ไม่มีวันหมดอายุ</p>
-                      <p className="text-xs text-amber-700 mt-0.5">
-                        ทำงานได้ตลอดไป ไม่นับวันหมดอายุ — ไม่สนใจจำนวนวันทดลองใช้ด้านล่าง
-                      </p>
-                    </div>
-                  </label>
-                  {!isLifetime && (
-                    <div className="flex items-center gap-3">
-                      <label className="text-xs font-medium text-amber-800 shrink-0">จำนวนวันทดลองใช้</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={365}
-                        value={trialDays}
-                        onChange={(e) => setTrialDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                        className="w-24 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-mono"
-                      />
-                      <span className="text-sm font-semibold text-amber-800">วัน</span>
-                      <span className="text-xs text-amber-600">
-                        (~{Math.round(trialDays / 30 * 10) / 10} เดือน)
-                      </span>
-                    </div>
-                  )}
+              {isTrial && !isLifetime && (
+                <div className="pl-7 flex items-center gap-3">
+                  <label className="text-xs font-medium text-amber-800 shrink-0">จำนวนวันทดลองใช้</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={trialDays}
+                    onChange={(e) => setTrialDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    className="w-24 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-mono"
+                  />
+                  <span className="text-sm font-semibold text-amber-800">วัน</span>
+                  <span className="text-xs text-amber-600">
+                    (~{Math.round(trialDays / 30 * 10) / 10} เดือน)
+                  </span>
                 </div>
               )}
+            </div>
+
+            {/* ตลอดชีพ (Lifetime) — independent of Trial, always toggleable */}
+            <div className="border border-indigo-200 bg-indigo-50 rounded-xl p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked={isLifetime} onChange={(e) => setIsLifetime(e.target.checked)}
+                  className="accent-indigo-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-indigo-800">ตลอดชีพ (Lifetime) — ไม่มีวันหมดอายุ</p>
+                  <p className="text-xs text-indigo-700 mt-0.5">
+                    ทำงานได้ตลอดไป ไม่นับวันหมดอายุ — ไม่สนใจจำนวนวันทดลองใช้ด้านบน
+                  </p>
+                </div>
+              </label>
             </div>
 
             {/* Partner permission */}
