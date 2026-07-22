@@ -11,7 +11,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { AmplifyClient, GetBranchCommand, ListBranchesCommand } from "@aws-sdk/client-amplify";
+import { AmplifyClient, GetAppCommand, GetBranchCommand, ListBranchesCommand } from "@aws-sdk/client-amplify";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -93,11 +93,24 @@ export async function fetchAmplifyBranchEnv(opts = {}) {
     return normalizeEnvMap(data?.environmentVariables);
   }
 
+  // This project's Amplify app stores its env vars at the APP level, not the
+  // branch level (get-branch returns {}) — confirmed directly against this
+  // app. Other Amplify apps may differ, so branch-level is still tried first.
+  async function getForApp() {
+    const { app } = await client.send(new GetAppCommand({ appId }));
+    return normalizeEnvMap(app?.environmentVariables);
+  }
+
   try {
     const vars = await getForBranch(branch);
-    if (Object.keys(vars).length > 0) return { vars, appId, branch, region, source: "amplify-api" };
+    if (Object.keys(vars).length > 0) return { vars, appId, branch, region, source: "amplify-api-branch" };
   } catch (err) {
     if (err.name !== "NotFoundException") throw err;
+  }
+
+  const appVars = await getForApp();
+  if (Object.keys(appVars).length > 0) {
+    return { vars: appVars, appId, branch, region, source: "amplify-api-app" };
   }
 
   const { branches } = await client.send(new ListBranchesCommand({ appId, maxResults: 50 }));
@@ -109,7 +122,7 @@ export async function fetchAmplifyBranchEnv(opts = {}) {
 
   branch = fallback;
   const vars = await getForBranch(branch);
-  return { vars, appId, branch, region, source: "amplify-api" };
+  return { vars, appId, branch, region, source: "amplify-api-branch" };
 }
 
 /**
