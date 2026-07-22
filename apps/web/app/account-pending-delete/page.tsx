@@ -29,7 +29,9 @@ export default function AccountPendingDeletePage() {
     try {
       const res = await fetch("/api/tenant/account/recover", { method: "POST" });
       if (!res.ok) throw new Error("recover_failed");
-      await update();
+      // update() needs a defined argument to actually POST — a bare
+      // update() sends a GET and never refreshes the JWT server-side.
+      await update({});
       router.replace("/dashboard/overview");
     } catch {
       setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");

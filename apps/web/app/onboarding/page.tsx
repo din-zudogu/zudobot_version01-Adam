@@ -392,8 +392,11 @@ export default function OnboardingPage() {
         }),
       });
       if (!res.ok) throw new Error("save_failed");
-      // Refresh JWT: swaps pendingRegistration → real role/tenantId
-      await update();
+      // Refresh JWT: swaps pendingRegistration → real role/tenantId.
+      // update() needs a defined argument — with zero args next-auth sends
+      // a plain GET instead of a POST, which never triggers the server
+      // jwt() "update" branch that actually resolves pending → real.
+      await update({});
       window.location.href = "/auth/redirect";
     } catch {
       setError("เกิดข้อผิดพลาด กรุณาลองใหม่");

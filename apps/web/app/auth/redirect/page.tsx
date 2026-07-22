@@ -118,7 +118,13 @@ function AuthRedirectInner() {
               // on a real request, sidestepping the client-side session hook
               // entirely. Guard with sessionStorage so a genuine failure
               // (cookie never updated) doesn't reload forever.
-              const updateResult = await updateRef.current();
+              // NextAuth's update() only POSTs (and thus only triggers the
+              // jwt() callback's trigger==="update" branch server-side) when
+              // called with a defined argument — update() with zero args
+              // silently issues a plain GET instead, which just re-reads the
+              // still-pending cookie unchanged. Must pass {} to actually
+              // refresh the token from the DB.
+              const updateResult = await updateRef.current({});
               console.log("[zudo-redirect] update() resolved, new session role=",
                 (updateResult as { user?: { role?: string } } | null)?.user?.role);
               if (!alreadyReloaded) {

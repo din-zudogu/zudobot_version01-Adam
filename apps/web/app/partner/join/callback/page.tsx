@@ -38,8 +38,9 @@ function JoinCallback() {
           if (data.error === "email_mismatch") {
             setError(`Please sign in with the invited email: ${data.inviteEmail}`);
           } else if (data.error === "already_joined") {
-            // Already activated — just redirect
-            await update();
+            // Already activated — just redirect.
+            // update() needs a defined argument to actually POST.
+            await update({});
             window.location.replace("/partner/overview");
           } else if (data.error === "token_expired") {
             setError("This invite has expired. Please ask your admin to resend the invite.");
@@ -51,8 +52,9 @@ function JoinCallback() {
           return;
         }
 
-        // Refresh session so middleware sees partner_admin role
-        await update();
+        // Refresh session so middleware sees partner_admin role.
+        // update() needs a defined argument to actually POST.
+        await update({});
         window.location.replace("/partner/overview");
       } catch {
         setError("Network error. Please try again.");

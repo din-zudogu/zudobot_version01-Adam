@@ -83,7 +83,9 @@ function VerifyForm() {
         } else if (data.error === "expired") {
           setTokenStatus("expired");
         } else if (data.error === "already_joined") {
-          await update();
+          // update() needs a defined argument to actually POST — a bare
+          // update() sends a GET and never refreshes the JWT server-side.
+          await update({});
           window.location.replace("/partner/overview");
         } else {
           setError("เกิดข้อผิดพลาด กรุณาลองใหม่");
@@ -91,8 +93,9 @@ function VerifyForm() {
         return;
       }
 
-      // Refresh JWT so middleware sees partner_admin role, then redirect
-      await update();
+      // Refresh JWT so middleware sees partner_admin role, then redirect.
+      // update() needs a defined argument to actually POST.
+      await update({});
       window.location.replace("/partner/overview");
     } catch {
       setError("Network error — กรุณาลองใหม่");

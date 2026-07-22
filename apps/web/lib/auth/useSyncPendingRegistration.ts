@@ -47,7 +47,10 @@ export function useSyncPendingRegistration() {
         if (check.ok) {
           const data = (await check.json()) as { registered?: boolean };
           if (data.registered) {
-            await updateRef.current();
+            // update() with no argument sends a plain GET (next-auth only
+            // POSTs — and thus only triggers the server jwt() "update"
+            // branch — when called with a defined argument).
+            await updateRef.current({});
             const fresh = await getSession();
             const freshRole = (fresh?.user as { role?: string } | undefined)?.role;
             if (freshRole && freshRole !== "pending") {
