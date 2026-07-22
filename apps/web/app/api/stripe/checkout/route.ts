@@ -138,6 +138,15 @@ export async function POST(req: NextRequest) {
           },
           { upsert: true },
         );
+        // Onboarding always sets a generic 14-day trialEndsAt regardless of
+        // which package the tenant actually signed up for — override it here
+        // with this specific package's own trial duration (e.g. 365 days for
+        // a "LIFE TIME" package) now that we know which one was chosen.
+        if (pkg.isTrial && pkg.trialDays) {
+          await UserModel.findByIdAndUpdate(tenantId, {
+            trialEndsAt: new Date(Date.now() + pkg.trialDays * 24 * 60 * 60 * 1000),
+          });
+        }
         return NextResponse.json({ url: "/dashboard?trial=1" });
       }
 

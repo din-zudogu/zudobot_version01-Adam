@@ -16,6 +16,7 @@ import { UserModel } from "@/lib/db/models/User";
 import { TenantProfileModel, type ITenantProfile } from "@/lib/db/models/TenantProfile";
 import { SubscriptionModel } from "@/lib/db/models/Subscription";
 import { PackageConfigModel } from "@/lib/db/models/PackageConfig";
+import { ReadyPackageModel } from "@/lib/db/models/ReadyPackage";
 import { NotificationModel } from "@/lib/db/models/Notification";
 import { getPlatformSettings } from "@/lib/db/models/PlatformSettings";
 import { isMemoryLimitExceeded } from "@/lib/memory/memoryService";
@@ -64,6 +65,23 @@ async function resolveLimits(tenantId: string): Promise<QuotaLimits> {
   ]);
 
   if (!sub || sub.planId === "trial" || sub.status === "trialing") {
+    // A ready package's own terms (message quota, retention) take priority
+    // over the platform-wide generic trial default, whenever the tenant's
+    // subscription is actually linked to one — e.g. "ZUDOBOT FREE - LIFE
+    // TIME" grants 30 msg/month, not the generic cfg.trialDailyQuotaCap.
+    if (sub?.readyPackageId) {
+      const pkg = await ReadyPackageModel.findById(sub.readyPackageId).lean();
+      const aiBaseItem  = pkg?.items.find((i) => i.plan.toLowerCase().includes("ai base"));
+      const expiredItem = pkg?.items.find((i) => i.plan.toLowerCase().includes("expired"));
+      if (aiBaseItem?.messageCount != null) {
+        return {
+          msgPerMonth:   aiBaseItem.messageCount,
+          retentionDays: expiredItem?.storageExpireDays ?? 7,
+          isTrial:       true,
+          isMonthly:     true,
+        };
+      }
+    }
     return {
       msgPerDay:    cfg.trialDailyQuotaCap,
       retentionDays: 7,
