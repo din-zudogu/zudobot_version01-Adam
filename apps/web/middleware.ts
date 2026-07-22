@@ -86,6 +86,9 @@ export async function middleware(request: NextRequest) {
     // (unauthenticated external site visitors) and the onboarding PDPA modal
     // for users still in "pending" registration (no full session yet).
     pathname.startsWith("/api/legal-documents/") ||
+    // Public, read-only package lookup — used by /register (pre-login) to
+    // show which ready package the user clicked through from.
+    pathname.startsWith("/api/checkout/validate") ||
     // Machine-to-machine cron endpoints — every handler under /api/cron/ is
     // guarded by INTERNAL_CRON_SECRET, so the session-auth redirect must not
     // intercept them (external schedulers / EventBridge carry no session cookie).
