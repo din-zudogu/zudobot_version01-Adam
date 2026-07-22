@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ZudobotLogo } from "@/components/layout/ZudobotLogo";
 import { getAuthErrorMessage } from "@/lib/auth/authErrors";
+
+const PLAN_LABELS: Record<string, string> = {
+  starter: "Starter",
+  pro: "Pro",
+  master: "Master",
+  enterprise: "Enterprise",
+};
 
 function RegisterForm() {
   const searchParams = useSearchParams();
@@ -16,6 +23,22 @@ function RegisterForm() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
+  const [packageLabel, setPackageLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const pkgId = searchParams.get("pkg");
+    const planId = searchParams.get("plan");
+    if (pkgId) {
+      fetch(`/api/checkout/validate?pkg=${encodeURIComponent(pkgId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json?.package?.name) setPackageLabel(json.package.name);
+        })
+        .catch(() => {});
+    } else if (planId) {
+      setPackageLabel(PLAN_LABELS[planId] ?? planId);
+    }
+  }, [searchParams]);
 
   async function handleGoogle() {
     setLoading(true);
@@ -50,20 +73,33 @@ function RegisterForm() {
             <ZudobotLogo size="md" variant="color" />
           </div>
 
-          {/* Trial badge */}
-          <div className="flex justify-center mb-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 border border-brand-200 text-xs font-medium text-brand-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-              ทดลองใช้ฟรี 14 วัน — ไม่ต้องใช้บัตรเครดิต
-            </span>
-          </div>
+          {packageLabel ? (
+            <div className="mb-6 px-4 py-3 rounded-xl bg-brand-50 border border-brand-200 text-center">
+              <p className="text-sm text-brand-700">
+                ท่านกำลังทำรายการสมัครใช้งาน ZUDOBOT ด้วยแพ็กเกจ
+              </p>
+              <p className="font-heading text-lg font-bold text-brand-800 mt-0.5">
+                {packageLabel}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Trial badge */}
+              <div className="flex justify-center mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 border border-brand-200 text-xs font-medium text-brand-700">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+                  ทดลองใช้ฟรี 14 วัน — ไม่ต้องใช้บัตรเครดิต
+                </span>
+              </div>
 
-          <h1 className="font-heading text-2xl font-bold text-text-primary text-center mb-1">
-            สมัครใช้งาน
-          </h1>
-          <p className="text-text-muted text-sm text-center mb-6">
-            250 ข้อความ/วัน · ไม่ผูกบัตร · ยกเลิกเมื่อใดก็ได้
-          </p>
+              <h1 className="font-heading text-2xl font-bold text-text-primary text-center mb-1">
+                สมัครใช้งาน
+              </h1>
+              <p className="text-text-muted text-sm text-center mb-6">
+                250 ข้อความ/วัน · ไม่ผูกบัตร · ยกเลิกเมื่อใดก็ได้
+              </p>
+            </>
+          )}
 
           {(authErrorMessage || error) && (
             <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
