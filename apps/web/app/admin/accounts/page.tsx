@@ -19,7 +19,7 @@ interface AccountRow {
   partner?: { partnerId?: string; status: string; isOrphaned: boolean; pendingDeleteAt?: string };
   vip?: { vipId: string; isActive: boolean; endDate?: string; label?: string };
   admin?: { role: string };
-  pending?: { attempts: number; lastAttemptAt: string };
+  pending?: { attempts: number; lastAttemptAt: string; wasRegistered: boolean };
 }
 
 interface ApiResponse {
@@ -198,7 +198,11 @@ export default function AdminAccountsPage() {
                         )}
                         {a.pending && (
                           <div>
-                            <p><span className="text-orange-700 font-semibold">สมัครไม่สำเร็จ</span> — ไม่มีบัญชีในระบบ</p>
+                            {a.pending.wasRegistered ? (
+                              <p><span className="text-slate-600 font-semibold">เคยสมัครสำเร็จแล้ว</span> — ถูกลบออกจากระบบภายหลัง</p>
+                            ) : (
+                              <p><span className="text-orange-700 font-semibold">สมัครไม่สำเร็จ</span> — ไม่มีบัญชีในระบบ</p>
+                            )}
                             <p className="text-text-muted">
                               พยายาม {a.pending.attempts} ครั้ง — ล่าสุด {new Date(a.pending.lastAttemptAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
                             </p>

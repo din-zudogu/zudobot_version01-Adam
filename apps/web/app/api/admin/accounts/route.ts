@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Phase 2: batch-fetch + enrich ──────────────────────────────────────────
-  const [users, partners, vips, pendingAgg] = await Promise.all([
+  const [users, partners, vips, pendingAgg, signupLogs] = await Promise.all([
     UserModel.find({ email: { $in: emails } }).lean(),
     PartnerProfileModel.find({ email: { $in: emails } }).select("-inviteToken -verifyCode").lean(),
     VipTenantModel.find({ email: { $in: emails } }).lean(),
@@ -81,6 +81,11 @@ export async function GET(req: NextRequest) {
       { $match: { category: "auth", action: "pending_registration_started", email: { $in: emails } } },
       { $group: { _id: "$email", attempts: { $sum: 1 }, lastAttemptAt: { $max: "$createdAt" } } },
     ]),
+    // Distinguishes "never completed signup" from "signed up successfully,
+    // account was since removed" — both look identical (no current User doc)
+    // without this, and the former's "สมัครไม่สำเร็จ" label is misleading
+    // for the latter case.
+    SystemLogModel.distinct("email", { category: "auth", action: "signup", email: { $in: emails } }),
   ]);
 
   const userByEmail    = Object.fromEntries(users.map((u) => [u.email.toLowerCase(), u]));
@@ -88,6 +93,9 @@ export async function GET(req: NextRequest) {
   const vipByEmail     = Object.fromEntries(vips.map((v) => [v.email.toLowerCase(), v]));
   const pendingByEmail = Object.fromEntries(
     pendingAgg.map((p: { _id: string; attempts: number; lastAttemptAt: Date }) => [p._id, p])
+  );
+  const previouslyRegisteredEmails = new Set(
+    (signupLogs as string[]).map((e) => e.toLowerCase())
   );
 
   let accounts = emails.map((email) => {
@@ -114,6 +122,7 @@ export async function GET(req: NextRequest) {
       pending: types.includes("pending") && pending ? {
         attempts:      pending.attempts,
         lastAttemptAt: pending.lastAttemptAt,
+        wasRegistered: previouslyRegisteredEmails.has(email),
       } : undefined,
       tenant: types.includes("tenant") && user ? {
         botState:        user.botState,
