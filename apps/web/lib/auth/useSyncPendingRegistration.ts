@@ -5,14 +5,6 @@ import { useEffect, useRef, useState } from "react";
 
 type SyncPhase = "loading" | "ready" | "redirecting";
 
-interface SyncDebug {
-  syncOk?: boolean;
-  registered?: boolean;
-  updateResultRole?: string;
-  freshRole?: string;
-  error?: string;
-}
-
 /**
  * Runs at most one sync-registration + session.update() per mount when role is pending.
  * Prevents infinite /api/auth/sync-registration ↔ /api/auth/session loops.
@@ -23,7 +15,6 @@ export function useSyncPendingRegistration() {
   const updateRef = useRef(update);
   updateRef.current = update;
   const [phase, setPhase] = useState<SyncPhase>("loading");
-  const [debug, setDebug] = useState<SyncDebug>({});
 
   const role = (session?.user as { role?: string } | undefined)?.role;
 
@@ -55,31 +46,25 @@ export function useSyncPendingRegistration() {
         });
         if (check.ok) {
           const data = (await check.json()) as { registered?: boolean };
-          setDebug((d) => ({ ...d, syncOk: true, registered: data.registered }));
           if (data.registered) {
             // update() with no argument sends a plain GET (next-auth only
             // POSTs — and thus only triggers the server jwt() "update"
             // branch — when called with a defined argument).
-            const updateResult = await updateRef.current({});
-            const updateResultRole = (updateResult?.user as { role?: string } | undefined)?.role;
-            setDebug((d) => ({ ...d, updateResultRole }));
+            await updateRef.current({});
             const fresh = await getSession();
             const freshRole = (fresh?.user as { role?: string } | undefined)?.role;
-            setDebug((d) => ({ ...d, freshRole }));
             if (freshRole && freshRole !== "pending") {
               setPhase("redirecting");
               return;
             }
           }
-        } else {
-          setDebug((d) => ({ ...d, syncOk: false }));
         }
-      } catch (err) {
-        setDebug((d) => ({ ...d, error: err instanceof Error ? err.message : String(err) }));
+      } catch {
+        // fall through — caller shows registration UI
       }
       setPhase("ready");
     })();
   }, [status, role]);
 
-  return { session, status, role, phase, debug };
+  return { session, status, role, phase };
 }

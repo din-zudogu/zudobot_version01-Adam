@@ -99,52 +99,36 @@ function AuthRedirectInner() {
 
       void (async () => {
         const alreadyReloaded = sessionStorage.getItem("zudo-pending-reload") === "1";
-        console.log("[zudo-redirect] pending branch start, alreadyReloaded=", alreadyReloaded);
         try {
           const check = await fetch("/api/auth/sync-registration", {
             credentials: "include",
           });
-          console.log("[zudo-redirect] sync-registration status=", check.status, check.ok);
           if (check.ok) {
             const data = (await check.json()) as { registered?: boolean };
-            console.log("[zudo-redirect] sync-registration body=", data);
             if (data.registered) {
               // The User row exists (onboarding/complete already succeeded).
-              // update() writes a new JWT cookie via the jwt() callback, but
-              // this SPA's useSession() client state doesn't reliably reflect
-              // that afterward (retrying update()+getSession() in-place never
-              // showed the new role, even repeatedly). Force one full reload
-              // instead — that makes middleware/SSR decode the cookie fresh
-              // on a real request, sidestepping the client-side session hook
-              // entirely. Guard with sessionStorage so a genuine failure
-              // (cookie never updated) doesn't reload forever.
-              // NextAuth's update() only POSTs (and thus only triggers the
-              // jwt() callback's trigger==="update" branch server-side) when
-              // called with a defined argument — update() with zero args
-              // silently issues a plain GET instead, which just re-reads the
-              // still-pending cookie unchanged. Must pass {} to actually
-              // refresh the token from the DB.
-              const updateResult = await updateRef.current({});
-              console.log("[zudo-redirect] update() resolved, new session role=",
-                (updateResult as { user?: { role?: string } } | null)?.user?.role);
+              // update() must get a defined argument — next-auth only POSTs
+              // (and thus only triggers the server jwt() "update" branch that
+              // actually re-fetches the user from the DB) when called with a
+              // defined argument; update() with zero args silently issues a
+              // plain GET that just re-reads the unchanged pending cookie.
+              await updateRef.current({});
               if (!alreadyReloaded) {
+                // Force one full reload so middleware/SSR decode the
+                // now-updated cookie fresh on a real request, rather than
+                // relying on this SPA's useSession() state to reflect the
+                // change in place. Guarded by sessionStorage so a genuine
+                // failure (cookie never updated) doesn't reload forever.
                 sessionStorage.setItem("zudo-pending-reload", "1");
-                console.log("[zudo-redirect] forcing window.location.reload()");
                 window.location.reload();
                 return;
               }
-              console.log("[zudo-redirect] already reloaded once and STILL pending — falling through to /auth/new-user");
               sessionStorage.removeItem("zudo-pending-reload");
-            } else {
-              console.log("[zudo-redirect] registered=false — DB says no User doc yet");
             }
-          } else {
-            console.log("[zudo-redirect] sync-registration NOT ok, body=", await check.text().catch(() => "<unreadable>"));
           }
-        } catch (err) {
-          console.log("[zudo-redirect] pending branch threw:", err);
+        } catch {
+          // fall through
         }
-        console.log("[zudo-redirect] falling through to router.replace('/auth/new-user')");
         router.replace("/auth/new-user");
       })();
       return;
