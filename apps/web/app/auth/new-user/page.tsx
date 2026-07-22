@@ -21,7 +21,7 @@ function getCookie(name: string): string | null {
 
 export default function NewUserPage() {
   const router = useRouter();
-  const { session, status, role, phase } = useSyncPendingRegistration();
+  const { session, status, role, phase, debug } = useSyncPendingRegistration();
   // Always resolves to something — either the specific package/plan the user
   // clicked through from, or the Trial fallback every unspecified signup
   // actually gets. This line is never blank.
@@ -147,6 +147,14 @@ export default function NewUserPage() {
               เข้าสู่ระบบด้วยอีเมลอื่น
             </Link>
           </p>
+
+          {/* Temporary debug panel — remove once the pending→resolved
+              redirect loop is confirmed fixed in production. */}
+          <div className="mt-6 p-3 rounded-lg bg-gray-900 text-left">
+            <pre className="text-[10px] text-lime-400 whitespace-pre-wrap break-all">
+{JSON.stringify({ debug }, null, 2)}
+            </pre>
+          </div>
         </div>
       </div>
     </div>
