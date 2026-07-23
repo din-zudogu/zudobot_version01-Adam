@@ -82,6 +82,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/widget/") ||
     pathname.startsWith("/api/embed/") ||
     pathname.startsWith("/api/public/") ||
+    // Chrome extension (Path 2) — every route under here authenticates itself
+    // (Google access token exchange, or its own self-issued Bearer token via
+    // resolveIntegrationAuth), so the NextAuth session-cookie gate below must
+    // not intercept it first. The extension's fetches carry no session
+    // cookie, so without this the middleware redirects to /login (HTML),
+    // which the extension can't parse as JSON — surfaces as a generic
+    // "widget_config_failed"/"unauthorized" instead of the real reason.
+    pathname.startsWith("/api/integration/") ||
     // Public, read-only, CORS-open by design — used by the embedded widget
     // (unauthenticated external site visitors) and the onboarding PDPA modal
     // for users still in "pending" registration (no full session yet).
