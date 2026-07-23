@@ -4,7 +4,7 @@ export const CHROME_EXTENSION_ID =
 
 /** ลิงก์ร้าน Chrome ทั้งก้อน (ใช้ได้ก่อนมี Extension ID) */
 export const CHROME_WEB_STORE_URL =
-  process.env.NEXT_PUBLIC_CHROME_WEB_STORE_URL?.trim() ?? "";
+  process.env.NEXT_PUBLIC_GOOGLE_EXTENSION_URL?.trim() ?? "";
 
 export function chromeWebStoreUrl(extensionId: string): string {
   return `https://chromewebstore.google.com/detail/${extensionId}`;

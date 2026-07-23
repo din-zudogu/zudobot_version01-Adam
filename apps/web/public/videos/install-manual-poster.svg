@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#3f3f46"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg2)"/>
+  <circle cx="640" cy="330" r="64" fill="#ffffff" fill-opacity="0.12"/>
+  <path d="M620 300 L672 330 L620 360 Z" fill="#ffffff"/>
+  <text x="640" y="470" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700" fill="#ffffff" text-anchor="middle">วิธีที่ 2: คัดลอกโค้ดติดตั้งเอง</text>
+  <text x="640" y="512" font-family="Segoe UI, sans-serif" font-size="20" fill="#d4d4d8" text-anchor="middle">คลิกเพื่อดูวิดีโอสาธิต</text>
+</svg>

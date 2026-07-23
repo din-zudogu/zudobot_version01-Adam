@@ -42,6 +42,48 @@ function Spinner() {
   );
 }
 
+function InstallVideoCard({
+  title,
+  description,
+  src,
+  poster,
+}: {
+  title: string;
+  description: string;
+  src: string;
+  poster: string;
+}) {
+  const [videoError, setVideoError] = useState(false);
+  return (
+    <div className="bg-surface-primary border border-border-default rounded-2xl overflow-hidden flex flex-col">
+      <div className="aspect-video bg-zinc-950 relative">
+        {!videoError ? (
+          <video
+            className="w-full h-full object-contain"
+            controls
+            preload="none"
+            poster={poster}
+            onError={() => setVideoError(true)}
+          >
+            <source src={src} type="video/mp4" />
+          </video>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-center px-4">
+            <p className="text-white/60 text-xs">วิดีโอสาธิตกำลังจัดเตรียม เร็วๆ นี้</p>
+          </div>
+        )}
+      </div>
+      <div className="p-4 flex-1 flex flex-col">
+        <p className="text-sm font-semibold text-text-primary mb-1">{title}</p>
+        <p className="text-xs text-text-muted mb-3 flex-1">{description}</p>
+        <Link href="/dashboard/widget" className="text-xs font-semibold text-brand-600 hover:underline">
+          ไปหน้าติดตั้งแชทบอท →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function TenantIdCard({ tenantId }: { tenantId: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -107,6 +149,27 @@ export default function DashboardOverviewPage() {
           {me.user.botState === "active" && !isVipActive && me.subscription?.currentPeriodEnd && (
             <p className="opacity-70 text-xs mt-0.5">ต่ออายุ {thDate(me.subscription.currentPeriodEnd)}</p>
           )}
+        </div>
+      </div>
+
+      {/* ── How to install: 2 methods ── */}
+      <div>
+        <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3">
+          วิธีติดตั้งแชทบอทบนเว็บไซต์ของคุณ
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <InstallVideoCard
+            title="วิธีที่ 1: ติดตั้งอัตโนมัติด้วย Chrome Extension"
+            description="เพิ่มตัวช่วย Zudobot ใน Chrome ครั้งเดียว เชื่อมต่อบัญชี แล้วกดปุ่มเดียวฝังแชทบอทเข้าเว็บทันที ไม่ต้องแก้โค้ดเว็บเอง"
+            src="/videos/install-extension.mp4"
+            poster="/videos/install-extension-poster.svg"
+          />
+          <InstallVideoCard
+            title="วิธีที่ 2: คัดลอกโค้ดติดตั้งเอง"
+            description="คัดลอกโค้ดสำเร็จรูปของร้านคุณ แล้ววางในหลังบ้านเว็บก่อนแท็กปิด </body> ใช้ได้กับทุกเบราว์เซอร์"
+            src="/videos/install-manual.mp4"
+            poster="/videos/install-manual-poster.svg"
+          />
         </div>
       </div>
 
