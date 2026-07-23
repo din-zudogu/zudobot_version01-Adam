@@ -17,24 +17,8 @@ chrome.runtime.onMessageExternal.addListener((message, _sender, sendResponse) =>
   }
 
   if (message?.action === "TRIGGER_OAUTH") {
-    chrome.identity.getAuthToken({ interactive: true }, async (googleToken) => {
-      if (chrome.runtime.lastError) {
-        sendResponse({
-          success: false,
-          error: chrome.runtime.lastError.message ?? "google_auth_failed",
-        });
-        return;
-      }
-      if (!googleToken) {
-        sendResponse({ success: false, error: "no_google_token" });
-        return;
-      }
-
-      const config = await fetchWidgetConfiguration(googleToken);
-      sendResponse({
-        success: config.ok === true,
-        ...config,
-      });
+    void signInAndFetchConfig(true).then((config) => {
+      sendResponse({ success: config.ok === true, ...config });
     });
     return true;
   }
@@ -54,16 +38,7 @@ chrome.runtime.onMessageExternal.addListener((message, _sender, sendResponse) =>
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "ZUDOBOT_GOOGLE_SIGN_IN") {
-    chrome.identity.getAuthToken({ interactive: true }, async (googleToken) => {
-      if (chrome.runtime.lastError || !googleToken) {
-        sendResponse({
-          ok: false,
-          error: chrome.runtime.lastError?.message ?? "no_google_token",
-        });
-        return;
-      }
-      sendResponse(await fetchWidgetConfiguration(googleToken));
-    });
+    void signInAndFetchConfig(true).then(sendResponse);
     return true;
   }
 
@@ -74,6 +49,25 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   return false;
 });
+
+function getAuthTokenAsync(interactive) {
+  return new Promise((resolve) => {
+    chrome.identity.getAuthToken({ interactive }, (token) => {
+      // Swallow lastError here — callers treat a falsy token as "no token"
+      // and chrome.runtime.lastError must still be read to avoid an
+      // "Unchecked runtime.lastError" warning in the service worker console.
+      void chrome.runtime.lastError;
+      resolve(token ?? null);
+    });
+  });
+}
+
+function removeCachedAuthToken(token) {
+  return new Promise((resolve) => {
+    if (!token) return resolve();
+    chrome.identity.removeCachedAuthToken({ token }, () => resolve());
+  });
+}
 
 async function fetchWidgetConfiguration(googleAccessToken) {
   const res = await fetch(`${API_BASE}/api/integration/extension/google-session`, {
@@ -108,25 +102,33 @@ async function fetchWidgetConfiguration(googleAccessToken) {
   };
 }
 
+/**
+ * Get a Google token and exchange it for the Zudobot session/widget config.
+ * If the server rejects the token (e.g. a stale cached token left over from
+ * a previous OAuth client_id), drop the cached copy and retry once with a
+ * fresh interactive consent — Chrome otherwise keeps handing out the same
+ * invalid token indefinitely via getAuthToken({interactive:false}).
+ */
+async function signInAndFetchConfig(interactive) {
+  const token = await getAuthTokenAsync(interactive);
+  if (!token) return { ok: false, error: "no_google_token" };
+
+  const first = await fetchWidgetConfiguration(token);
+  if (first.ok) return first;
+
+  await removeCachedAuthToken(token);
+  const retryToken = await getAuthTokenAsync(true);
+  if (!retryToken) return first;
+  if (retryToken === token) return first;
+
+  return fetchWidgetConfiguration(retryToken);
+}
+
 async function runDashboardInject() {
-  const token = await new Promise((resolve) => {
-    chrome.identity.getAuthToken({ interactive: false }, resolve);
-  });
-  if (!token) {
-    const oauth = await new Promise((resolve) => {
-      chrome.identity.getAuthToken({ interactive: true }, resolve);
-    });
-    if (!oauth) {
-      return { success: false, error: "oauth_required" };
-    }
-    const config = await fetchWidgetConfiguration(oauth);
+  const stored = await chrome.storage.session.get(["zudobot_embed_script"]);
+  if (!stored.zudobot_embed_script) {
+    const config = await signInAndFetchConfig(true);
     if (!config.ok) return { success: false, error: config.error ?? "oauth_failed" };
-  } else {
-    const stored = await chrome.storage.session.get(["zudobot_embed_script"]);
-    if (!stored.zudobot_embed_script) {
-      const config = await fetchWidgetConfiguration(token);
-      if (!config.ok) return { success: false, error: config.error ?? "config_failed" };
-    }
   }
 
   const injected = await injectOnActiveTab();
@@ -136,19 +138,16 @@ async function runDashboardInject() {
 async function injectOnActiveTab() {
   const stored = await chrome.storage.session.get(["zudobot_embed_script"]);
   let embedScript = stored.zudobot_embed_script;
+  let lastError = "oauth_required";
 
   if (!embedScript) {
-    const token = await new Promise((resolve) => {
-      chrome.identity.getAuthToken({ interactive: false }, resolve);
-    });
-    if (token) {
-      const config = await fetchWidgetConfiguration(token);
-      embedScript = config.embedScript;
-    }
+    const config = await signInAndFetchConfig(false);
+    embedScript = config.embedScript;
+    if (!config.ok) lastError = config.error ?? "config_failed";
   }
 
   if (!embedScript) {
-    return { ok: false, error: "oauth_required" };
+    return { ok: false, error: lastError };
   }
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

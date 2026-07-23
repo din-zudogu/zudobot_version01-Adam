@@ -1,7 +1,7 @@
 /**
  * inject-extension-config.mjs
  *
- * Runs during Amplify preBuild. Reads GOOGLE_ZDB_CLIENT_ID from environment
+ * Runs during Amplify preBuild. Reads GOOGLE_EXTENSION_OAUTH_CLIENT_ID from environment
  * and injects it into the Chrome Extension manifest.json, then rebuilds
  * the extension zip ready for Web Store submission or developer testing.
  *
@@ -24,10 +24,10 @@ const DRY_RUN    = process.argv.includes("--dry-run");
 
 // ── 1. Read env var ───────────────────────────────────────────────────────────
 
-const clientId = process.env.GOOGLE_ZDB_CLIENT_ID?.trim();
+const clientId = process.env.GOOGLE_EXTENSION_OAUTH_CLIENT_ID?.trim();
 
 if (!clientId) {
-  console.warn("[extension-config] ⚠️  GOOGLE_ZDB_CLIENT_ID is not set — skipping injection.");
+  console.warn("[extension-config] ⚠️  GOOGLE_EXTENSION_OAUTH_CLIENT_ID is not set — skipping injection.");
   console.warn("                      manifest.json will keep its current oauth2.client_id value.");
   process.exit(0);
 }

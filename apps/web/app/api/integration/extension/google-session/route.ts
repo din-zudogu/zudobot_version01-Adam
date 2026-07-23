@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
   }
 
   const verified = await verifyGoogleAccessToken(googleAccessToken);
-  if (!verified) {
-    return NextResponse.json({ error: "invalid_google_token" }, { status: 401 });
+  if (!verified.ok) {
+    return NextResponse.json({ error: verified.error }, { status: 401 });
   }
 
   const appUrl = requirePublicAppUrl();
