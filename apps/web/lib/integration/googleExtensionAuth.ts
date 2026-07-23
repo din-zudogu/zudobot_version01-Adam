@@ -69,10 +69,16 @@ export async function verifyGoogleAccessToken(
     }
   }
 
-  await connectDB();
-  const user = await UserModel.findOne({
-    email: info.email.toLowerCase().trim(),
-  }).lean();
+  let user;
+  try {
+    await connectDB();
+    user = await UserModel.findOne({
+      email: info.email.toLowerCase().trim(),
+    }).lean();
+  } catch (err) {
+    console.error("[googleExtensionAuth] account lookup failed:", err);
+    return { ok: false, error: "account_lookup_failed" };
+  }
   if (!user) return { ok: false, error: "account_not_found" };
 
   const role =

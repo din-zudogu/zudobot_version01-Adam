@@ -25,15 +25,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing_google_access_token" }, { status: 400 });
   }
 
-  const verified = await verifyGoogleAccessToken(googleAccessToken);
-  if (!verified.ok) {
-    return NextResponse.json({ error: verified.error }, { status: 401 });
-  }
-
-  const appUrl = requirePublicAppUrl();
-  const { accessToken, expiresIn } = issueExtensionSession(verified.ctx);
-
   try {
+    const verified = await verifyGoogleAccessToken(googleAccessToken);
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.error }, { status: 401 });
+    }
+
+    const appUrl = requirePublicAppUrl();
+    const { accessToken, expiresIn } = issueExtensionSession(verified.ctx);
+
     if (verified.ctx.role === "tenant") {
       await connectDB();
       const profile = await TenantProfileModel.findOne({
@@ -89,7 +89,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "forbidden_role" }, { status: 403 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "build_failed";
+    console.error("[extension/google-session] unhandled error:", err);
+    const message = err instanceof Error ? err.message : "server_error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
