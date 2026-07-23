@@ -157,10 +157,19 @@ async function injectOnActiveTab() {
     target: { tabId: tab.id },
     func: (html) => {
       if (document.querySelector('script[data-tenant-id], script[data-key]')) return;
+      // Scripts parsed via innerHTML/<template> are inert per the HTML spec —
+      // moving that node into the live document does NOT execute it. Build a
+      // real element via createElement (copying its attributes) so the
+      // browser actually runs it.
       const tpl = document.createElement("template");
       tpl.innerHTML = html.trim();
-      const el = tpl.content.firstChild;
-      if (el) document.head.appendChild(el);
+      const parsed = tpl.content.firstElementChild;
+      if (!parsed || parsed.tagName !== "SCRIPT") return;
+      const script = document.createElement("script");
+      for (const attr of parsed.attributes) {
+        script.setAttribute(attr.name, attr.value);
+      }
+      document.head.appendChild(script);
     },
     args: [embedScript],
   });

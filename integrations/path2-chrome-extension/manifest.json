@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Zudobot Installer",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "ช่วยฝังสคริปต์ Zudobot เข้ากับเว็บไซต์ของคุณอย่างปลอดภัยโดยไม่ต้องแตะโค้ด",
   "permissions": [
     "identity",
