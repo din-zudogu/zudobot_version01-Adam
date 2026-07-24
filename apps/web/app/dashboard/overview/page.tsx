@@ -152,18 +152,12 @@ export default function DashboardOverviewPage() {
         </div>
       </div>
 
-      {/* ── How to install: 2 methods ── */}
+      {/* ── How to install ── */}
       <div>
         <p className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3">
           วิธีติดตั้งแชทบอทบนเว็บไซต์ของคุณ
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InstallVideoCard
-            title="วิธีที่ 1: ติดตั้งอัตโนมัติด้วย Chrome Extension"
-            description="เพิ่มตัวช่วย Zudobot ใน Chrome ครั้งเดียว เชื่อมต่อบัญชี แล้วกดปุ่มเดียวฝังแชทบอทเข้าเว็บทันที ไม่ต้องแก้โค้ดเว็บเอง"
-            src="/videos/install-extension.mp4"
-            poster="/videos/install-extension-poster.svg"
-          />
+        <div className="grid grid-cols-1 max-w-md gap-4">
           <InstallVideoCard
             title="วิธีที่ 2: คัดลอกโค้ดติดตั้งเอง"
             description="คัดลอกโค้ดสำเร็จรูปของร้านคุณ แล้ววางในหลังบ้านเว็บก่อนแท็กปิด </body> ใช้ได้กับทุกเบราว์เซอร์"

@@ -41,6 +41,19 @@ const STATIC_ENV_SNAPSHOT: Record<string, string | undefined> = {
   MAIL_PROVIDER:         process.env.MAIL_PROVIDER,
   MAIL_API_KEY:          process.env.MAIL_API_KEY,
   MAIL_FROM:             process.env.MAIL_FROM,
+  // ── Git-connect auto-install — optional, feature-scoped (see AMPLIFY_CONFIG below) ──
+  GITHUB_CLIENT_ID:               process.env.GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET:           process.env.GITHUB_CLIENT_SECRET,
+  GITLAB_CLIENT_ID:               process.env.GITLAB_CLIENT_ID,
+  GITLAB_CLIENT_SECRET:           process.env.GITLAB_CLIENT_SECRET,
+  BITBUCKET_CLIENT_ID:            process.env.BITBUCKET_CLIENT_ID,
+  BITBUCKET_CLIENT_SECRET:        process.env.BITBUCKET_CLIENT_SECRET,
+  ANTHROPIC_API_KEY:              process.env.ANTHROPIC_API_KEY,
+  GIT_OAUTH_TOKEN_ENCRYPTION_KEY: process.env.GIT_OAUTH_TOKEN_ENCRYPTION_KEY,
+  // Zudobot's own AWS account — the trusted principal in the CloudFormation
+  // Quick-Create template customers launch to grant CodeCommit cross-account
+  // access (no long-lived customer secret keys involved for this path).
+  ZUDOBOT_AWS_ACCOUNT_ID:         process.env.ZUDOBOT_AWS_ACCOUNT_ID,
 };
 
 function readEnv(name: string): string | undefined {
@@ -144,5 +157,39 @@ export const AMPLIFY_CONFIG = {
   },
   get mailFrom() {
     return readEnv("MAIL_FROM"); // e.g. "Zudobot <noreply@zudogu.com>"
+  },
+  // ── Git-connect auto-install (GitHub/GitLab/Bitbucket OAuth + Claude
+  // agent) — optional app-wide: only the specific route/service that needs
+  // one of these throws when it's actually accessed and missing, so an
+  // unconfigured provider doesn't block tenants using the others. Callers
+  // must wrap access in try/catch and return 503 { error: "integration_not_configured" }.
+  get githubClientId() {
+    return requireAmplifyEnv("GITHUB_CLIENT_ID");
+  },
+  get githubClientSecret() {
+    return requireAmplifyEnv("GITHUB_CLIENT_SECRET");
+  },
+  get gitlabClientId() {
+    return requireAmplifyEnv("GITLAB_CLIENT_ID");
+  },
+  get gitlabClientSecret() {
+    return requireAmplifyEnv("GITLAB_CLIENT_SECRET");
+  },
+  get bitbucketClientId() {
+    return requireAmplifyEnv("BITBUCKET_CLIENT_ID");
+  },
+  get bitbucketClientSecret() {
+    return requireAmplifyEnv("BITBUCKET_CLIENT_SECRET");
+  },
+  get anthropicApiKey() {
+    return requireAmplifyEnv("ANTHROPIC_API_KEY");
+  },
+  // 64 hex chars (32 bytes) — AES-256-GCM key, dedicated (not PII_ENCRYPTION_KEY)
+  // to limit blast radius if one key ever leaks.
+  get gitOAuthTokenEncryptionKey() {
+    return requireAmplifyEnv("GIT_OAUTH_TOKEN_ENCRYPTION_KEY");
+  },
+  get zudobotAwsAccountId() {
+    return requireAmplifyEnv("ZUDOBOT_AWS_ACCOUNT_ID");
   },
 };

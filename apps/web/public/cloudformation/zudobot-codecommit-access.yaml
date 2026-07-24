@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Zudobot — grants Zudobot's platform account least-privilege, read/write
+  access to a single AWS CodeCommit setup via a cross-account IAM Role.
+  No long-lived access keys are created or shared — Zudobot calls
+  sts:AssumeRole with the ExternalId below whenever it needs to work with
+  your repository, and only ever receives short-lived (~1 hour) credentials.
+  You can revoke access at any time by deleting this stack.
+
+Parameters:
+  ZudobotAccountId:
+    Type: String
+    Description: Zudobot's AWS account ID (the only principal trusted to assume this role).
+  ExternalId:
+    Type: String
+    Description: >
+      Unique per-connection secret Zudobot generated for you — prevents any
+      other Zudobot customer (or anyone else who might learn your Role ARN)
+      from assuming this role. Do not reuse it elsewhere.
+    NoEcho: true
+
+Resources:
+  ZudobotCodeCommitRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "ZudobotCodeCommitAccess-${AWS::StackName}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${ZudobotAccountId}:root"
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "sts:ExternalId": !Ref ExternalId
+      MaxSessionDuration: 3600
+      Policies:
+        - PolicyName: ZudobotCodeCommitLeastPrivilege
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadAndBrowse
+                Effect: Allow
+                Action:
+                  - codecommit:ListRepositories
+                  - codecommit:GetRepository
+                  - codecommit:GetFolder
+                  - codecommit:GetFile
+                  - codecommit:GetBranch
+                  - codecommit:ListBranches
+                Resource: "*"
+              - Sid: CommitAndBranch
+                Effect: Allow
+                Action:
+                  - codecommit:CreateBranch
+                  - codecommit:CreateCommit
+                Resource: "*"
+              - Sid: PullRequests
+                Effect: Allow
+                Action:
+                  - codecommit:CreatePullRequest
+                  - codecommit:GetPullRequest
+                  - codecommit:UpdatePullRequestTitle
+                  - codecommit:UpdatePullRequestDescription
+                  - codecommit:MergePullRequestByFastForward
+                  - codecommit:MergePullRequestBySquash
+                  - codecommit:MergePullRequestByThreeWay
+                  - codecommit:GetMergeConflicts
+                Resource: "*"
+
+Outputs:
+  RoleArn:
+    Description: Copy this ARN back into the Zudobot dashboard to finish connecting.
+    Value: !GetAtt ZudobotCodeCommitRole.Arn
