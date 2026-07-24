@@ -3,17 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  CHROME_EXTENSION_ID,
-  CHROME_WEB_STORE_URL,
-  chromeWebStoreUrl,
-  getChromeRuntime,
-} from "@/lib/widget/integration/chromeExtension";
 import { confirmLeaveWhenDirty } from "@/lib/admin/unsavedChanges";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { normalizeWhitelistDomain } from "@/lib/platform/normalizeWhitelistDomain";
+import { GitConnectFlow } from "@/components/widget/git/GitConnectFlow";
 
-type TabId = "extension" | "manual";
+type TabId = "git" | "manual";
 
 type Props = {
   tenantId: string;
@@ -21,24 +16,12 @@ type Props = {
   embedKey: string;
 };
 
-type ExtCheckResponse = {
-  status?: string;
-  installed?: boolean;
-  version?: string;
-};
-
-type InjectResponse = { success?: boolean; error?: string; message?: string };
-
 export function ZudobotIntegration({ tenantId, embedKey }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabId>("manual");
-  const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
-  const [checkingExtension, setCheckingExtension] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabId>("git");
   const [embedCode, setEmbedCode] = useState("");
   const [loadingCode, setLoadingCode] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
-  const [injecting, setInjecting] = useState(false);
-  const [connecting, setConnecting] = useState(false);
 
   const [savedDomain, setSavedDomain] = useState<string | null>(null);
   const [domainInput, setDomainInput] = useState("");
@@ -47,16 +30,6 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
   const [domainMsg, setDomainMsg] = useState<string | null>(null);
   const [domainError, setDomainError] = useState<string | null>(null);
   const [domainsLoaded, setDomainsLoaded] = useState(false);
-
-  const extensionId = CHROME_EXTENSION_ID;
-  const storeUrl = useMemo(
-    () =>
-      extensionId
-        ? chromeWebStoreUrl(extensionId)
-        : CHROME_WEB_STORE_URL || "",
-    [extensionId]
-  );
-  const storeReady = Boolean(storeUrl);
 
   const isDomainDirty = useMemo(() => {
     const normalized = normalizeWhitelistDomain(domainInput);
@@ -73,43 +46,6 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
     },
     [isDomainDirty, router]
   );
-
-  const checkExtensionPresence = useCallback(() => {
-    if (!extensionId) {
-      setIsExtensionInstalled(false);
-      setCheckingExtension(false);
-      return;
-    }
-
-    const runtime = getChromeRuntime();
-    if (!runtime?.sendMessage) {
-      setIsExtensionInstalled(false);
-      setCheckingExtension(false);
-      return;
-    }
-
-    setCheckingExtension(true);
-    runtime.sendMessage(
-      extensionId,
-      { action: "CHECK_ZUDOBOT_EXTENSION" },
-      (response: unknown) => {
-        const err = runtime.lastError?.message;
-        if (err) {
-          setIsExtensionInstalled(false);
-        } else {
-          const res = response as ExtCheckResponse | undefined;
-          setIsExtensionInstalled(
-            res?.status === "ACTIVE" || res?.installed === true
-          );
-        }
-        setCheckingExtension(false);
-      }
-    );
-  }, [extensionId]);
-
-  useEffect(() => {
-    checkExtensionPresence();
-  }, [checkExtensionPresence]);
 
   const loadDomains = useCallback(async () => {
     try {
@@ -165,64 +101,6 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
   useEffect(() => {
     if (activeTab === "manual" && domainsLoaded) void fetchEmbedSnippet();
   }, [activeTab, domainsLoaded, fetchEmbedSnippet]);
-
-  async function triggerAutoInjection() {
-    if (!extensionId) {
-      window.alert(
-        "ตัวช่วยติดตั้งอัตโนมัติยังไม่พร้อม — ใช้แท็บ「คัดลอกโค้ด」ด้านบนแทนได้เลย"
-      );
-      return;
-    }
-
-    const runtime = getChromeRuntime();
-    if (!runtime?.sendMessage) {
-      window.alert("กรุณาใช้เบราว์เซอร์ Google Chrome และติดตั้งตัวช่วยจาก Chrome Web Store ก่อน");
-      return;
-    }
-
-    setInjecting(true);
-    runtime.sendMessage(
-      extensionId,
-      {
-        action: "INJECT_WIDGET_SCRIPT",
-        tenantId,
-        widgetId: embedKey,
-      },
-      (response: unknown) => {
-        setInjecting(false);
-        const err = runtime.lastError?.message;
-        if (err) {
-          window.alert(
-            "ยังติดตั้งไม่ได้ — เปิดแท็บเว็บร้านของคุณก่อน แล้วกดปุ่มนี้อีกครั้ง"
-          );
-          return;
-        }
-        const res = response as InjectResponse | undefined;
-        if (res?.success) {
-          window.alert(
-            "ติดตั้งสคริปต์แชทบอทเข้าเว็บร้านของคุณสำเร็จแล้ว"
-          );
-        } else {
-          window.alert(
-            "เปิดแท็บเว็บร้านของคุณ (โดเมนที่บันทึกไว้ด้านล่าง) ค้างไว้ แล้วกดปุ่มนี้อีกครั้ง"
-          );
-        }
-      }
-    );
-  }
-
-  function handleConnectAccount() {
-    if (!extensionId || !getChromeRuntime()?.sendMessage) return;
-    setConnecting(true);
-    getChromeRuntime()!.sendMessage(
-      extensionId,
-      { action: "TRIGGER_OAUTH" },
-      () => {
-        setConnecting(false);
-        checkExtensionPresence();
-      }
-    );
-  }
 
   async function handleSaveDomain() {
     const clean = normalizeWhitelistDomain(domainInput);
@@ -330,82 +208,20 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
         </div>
 
         <div className="flex border-b border-border-default -mx-1">
-          <button type="button" className={tabClass("extension")} onClick={() => setActiveTab("extension")}>
-            วิธีที่ 1: ติดตั้งอัตโนมัติด้วย Chrome Extension
+          <button type="button" className={tabClass("git")} onClick={() => setActiveTab("git")}>
+            เชื่อมต่อซอร์สโค้ด (แนะนำ)
           </button>
           <button type="button" className={tabClass("manual")} onClick={() => setActiveTab("manual")}>
-            วิธีที่ 2: คัดลอกโค้ดติดตั้งเอง
+            คัดลอกโค้ดติดตั้งเอง
           </button>
         </div>
 
-        {activeTab === "extension" && (
-          <div className="space-y-4">
-            <div className="rounded-xl bg-brand-50 border border-brand-100 p-4 text-sm text-text-secondary leading-relaxed">
-              <p className="font-semibold text-brand-800 mb-1">ระบบติดตั้งอัตโนมัติทำงานอย่างไร?</p>
-              <p>
-                เพิ่มตัวช่วย Zudobot ใน Chrome ครั้งเดียว จากนั้นเปิดเว็บร้านของคุณ
-                แล้วกดปุ่มด้านล่างเพื่อฝังแชทบอททันที — ไม่ต้องแก้ไฟล์โค้ดเว็บเอง
-              </p>
-            </div>
-
-            {checkingExtension ? (
-              <p className="text-sm text-text-muted italic">กำลังตรวจสอบตัวช่วยบน Chrome...</p>
-            ) : !storeReady ? (
-              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
-                ตัวช่วย Chrome กำลังเปิดให้บริการเร็วๆ นี้ — ใช้「วิธีที่ 2: คัดลอกโค้ด」แทนได้ทันที
-              </div>
-            ) : !isExtensionInstalled ? (
-              <div className="rounded-xl border border-border-default bg-surface-secondary p-6 text-center space-y-3">
-                <p className="text-sm font-semibold text-text-primary">
-                  ยังไม่ได้ติดตั้งตัวช่วยบน Chrome
-                </p>
-                <button
-                  type="button"
-                  onClick={() => window.open(storeUrl, "_blank", "noopener,noreferrer")}
-                  className="w-full max-w-md mx-auto py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold"
-                >
-                  ไปดาวน์โหลดจาก Chrome Web Store
-                </button>
-                <p className="text-xs text-text-muted">
-                  หลังกด「เพิ่มใน Chrome」แล้ว กลับมาหน้านี้และกดตรวจสอบอีกครั้ง
-                </p>
-                <button
-                  type="button"
-                  onClick={checkExtensionPresence}
-                  className="text-xs font-medium text-brand-600 hover:text-brand-700"
-                >
-                  ตรวจสอบอีกครั้ง
-                </button>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center space-y-3">
-                <p className="text-sm font-semibold text-green-800">
-                  พบตัวช่วยติดตั้งบน Chrome แล้ว — พร้อมใช้งาน
-                </p>
-                <p className="text-xs text-green-700">
-                  ขั้นที่ 1: กด「เชื่อมต่อบัญชี」 (ครั้งแรก) · ขั้นที่ 2: เปิดแท็บเว็บร้าน · ขั้นที่ 3: กดปุ่มสีเขียว
-                </p>
-                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <button
-                    type="button"
-                    disabled={connecting}
-                    onClick={handleConnectAccount}
-                    className="px-5 py-2.5 rounded-xl border border-brand-300 bg-white text-brand-700 text-sm font-semibold disabled:opacity-50"
-                  >
-                    {connecting ? "กำลังเชื่อมต่อ..." : "เชื่อมต่อบัญชี"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={injecting}
-                    onClick={() => void triggerAutoInjection()}
-                    className="px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-50"
-                  >
-                    {injecting ? "กำลังติดตั้ง..." : "เปิดใช้งานแชทบอทบนเว็บฉันทันที"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        {activeTab === "git" && (
+          <GitConnectFlow
+            tenantId={tenantId}
+            embedKey={embedKey}
+            onFallbackToManual={() => setActiveTab("manual")}
+          />
         )}
 
         {activeTab === "manual" && (
