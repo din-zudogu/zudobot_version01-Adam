@@ -155,6 +155,14 @@ async function injectOnActiveTab() {
 
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
+    // MAIN world — an ISOLATED-world (default) content script that builds and
+    // appends its own <script> element gets hit by Chrome's synthetic CSP
+    // guard against exactly this technique (script-src 'self' + the injecting
+    // extension's own origin only), blocking the external widget.js load even
+    // when the page itself sets no CSP at all. Running in MAIN world makes the
+    // inserted <script> a genuine part of the page's own JS context, subject
+    // to the page's real CSP instead of that guard.
+    world: "MAIN",
     func: (html) => {
       if (document.querySelector('script[data-tenant-id], script[data-key]')) return;
       // Scripts parsed via innerHTML/<template> are inert per the HTML spec —
