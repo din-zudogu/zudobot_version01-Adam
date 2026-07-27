@@ -6,19 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { confirmLeaveWhenDirty } from "@/lib/admin/unsavedChanges";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { normalizeWhitelistDomain } from "@/lib/platform/normalizeWhitelistDomain";
-import { GitConnectFlow } from "@/components/widget/git/GitConnectFlow";
 
-type TabId = "git" | "manual";
-
-type Props = {
-  tenantId: string;
-  /** รหัสฝังของร้าน (ใช้ภายในระบบ ไม่แสดงให้ลูกค้า) */
-  embedKey: string;
-};
-
-export function ZudobotIntegration({ tenantId, embedKey }: Props) {
+export function ZudobotIntegration() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabId>("git");
   const [embedCode, setEmbedCode] = useState("");
   const [loadingCode, setLoadingCode] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
@@ -93,14 +83,12 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
   }, []);
 
   const refreshEmbedAfterDomainChange = useCallback(async () => {
-    if (activeTab === "manual") {
-      await fetchEmbedSnippet();
-    }
-  }, [activeTab, fetchEmbedSnippet]);
+    await fetchEmbedSnippet();
+  }, [fetchEmbedSnippet]);
 
   useEffect(() => {
-    if (activeTab === "manual" && domainsLoaded) void fetchEmbedSnippet();
-  }, [activeTab, domainsLoaded, fetchEmbedSnippet]);
+    if (domainsLoaded) void fetchEmbedSnippet();
+  }, [domainsLoaded, fetchEmbedSnippet]);
 
   async function handleSaveDomain() {
     const clean = normalizeWhitelistDomain(domainInput);
@@ -173,14 +161,6 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
     });
   }
 
-  const tabClass = (tab: TabId) =>
-    [
-      "px-4 py-3 text-sm font-medium border-b-2 transition-colors",
-      activeTab === tab
-        ? "border-brand-600 text-brand-700"
-        : "border-transparent text-text-muted hover:text-text-primary",
-    ].join(" ");
-
   return (
     <div className="max-w-3xl space-y-6">
       <nav className="text-sm text-text-muted" aria-label="นำทาง">
@@ -203,73 +183,50 @@ export function ZudobotIntegration({ tenantId, embedKey }: Props) {
             ติดตั้งระบบแชทบอท Zudobot เข้ากับเว็บไซต์ของคุณ
           </h1>
           <p className="text-sm text-text-muted mt-1">
-            เลือกวิธีเปิดใช้งานตัวช่วยตอบคำถามบนเว็บร้านตามความสะดวก
+            คัดลอกโค้ดด้านล่าง แล้วนำไปวางในหลังบ้านเว็บของคุณ
           </p>
         </div>
 
-        <div className="flex border-b border-border-default -mx-1">
-          <button type="button" className={tabClass("git")} onClick={() => setActiveTab("git")}>
-            เชื่อมต่อซอร์สโค้ด (แนะนำ)
-          </button>
-          <button type="button" className={tabClass("manual")} onClick={() => setActiveTab("manual")}>
-            คัดลอกโค้ดติดตั้งเอง
-          </button>
-        </div>
-
-        {activeTab === "git" && (
-          <GitConnectFlow
-            tenantId={tenantId}
-            embedKey={embedKey}
-            onFallbackToManual={() => setActiveTab("manual")}
-          />
-        )}
-
-        {activeTab === "manual" && (
-          <div className="space-y-4">
-            <p className="text-sm text-text-secondary">
-              ใช้ได้กับ Safari, Firefox หรือเมื่อต้องการวางโค้ดในหลังบ้านเว็บเอง
-            </p>
-
-            {loadingCode ? (
-              <div className="py-10 text-center text-sm text-text-muted border border-dashed border-border-default rounded-xl">
-                กำลังสร้างชุดโค้ดสำหรับร้านของคุณ...
-              </div>
-            ) : (
-              <>
-                <div className="relative">
-                  <pre className="bg-gray-950 text-green-400 rounded-xl p-4 text-xs overflow-x-auto font-mono whitespace-pre-wrap min-h-[4rem]">
-                    {embedCode || codeError || "ยังไม่มีโค้ด — กดโหลดใหม่"}
-                  </pre>
-                  {embedCode && (
-                    <button
-                      type="button"
-                      onClick={handleCopyCode}
-                      className="absolute top-2 right-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-600 text-white hover:bg-brand-700"
-                    >
-                      คัดลอกโค้ด
-                    </button>
-                  )}
-                </div>
-                {!embedCode && (
+        <div className="space-y-4">
+          {loadingCode ? (
+            <div className="py-10 text-center text-sm text-text-muted border border-dashed border-border-default rounded-xl">
+              กำลังสร้างชุดโค้ดสำหรับร้านของคุณ...
+            </div>
+          ) : (
+            <>
+              <div className="relative">
+                <pre className="bg-gray-950 text-green-400 rounded-xl p-4 text-xs overflow-x-auto font-mono whitespace-pre-wrap min-h-[4rem]">
+                  {embedCode || codeError || "ยังไม่มีโค้ด — กดโหลดใหม่"}
+                </pre>
+                {embedCode && (
                   <button
                     type="button"
-                    onClick={() => void fetchEmbedSnippet()}
-                    className="text-sm font-medium text-brand-600 hover:text-brand-700"
+                    onClick={handleCopyCode}
+                    className="absolute top-2 right-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-600 text-white hover:bg-brand-700"
                   >
-                    โหลดโค้ดใหม่
+                    คัดลอกโค้ด
                   </button>
                 )}
-                <div className="rounded-xl bg-amber-50 border border-amber-100 p-4 text-sm text-amber-900">
-                  <p className="font-semibold mb-1">วิธีนำไปวาง</p>
-                  <p>
-                    คัดลอกโค้ดด้านบน ไปวางในหลังบ้านเว็บ (ช่อง HTML / Script หรือก่อนแท็กปิด{" "}
-                    <code className="font-mono font-bold">&lt;/body&gt;</code>) แล้วกดบันทึก
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+              </div>
+              {!embedCode && (
+                <button
+                  type="button"
+                  onClick={() => void fetchEmbedSnippet()}
+                  className="text-sm font-medium text-brand-600 hover:text-brand-700"
+                >
+                  โหลดโค้ดใหม่
+                </button>
+              )}
+              <div className="rounded-xl bg-amber-50 border border-amber-100 p-4 text-sm text-amber-900">
+                <p className="font-semibold mb-1">วิธีนำไปวาง</p>
+                <p>
+                  คัดลอกโค้ดด้านบน ไปวางในหลังบ้านเว็บ (ช่อง HTML / Script หรือก่อนแท็กปิด{" "}
+                  <code className="font-mono font-bold">&lt;/body&gt;</code>) แล้วกดบันทึก
+                </p>
+              </div>
+            </>
+          )}
+        </div>
 
         <div className="border-t border-border-default pt-5 space-y-3">
           <h3 className="text-sm font-semibold text-text-primary">

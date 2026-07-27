@@ -159,7 +159,7 @@ export default function DashboardOverviewPage() {
         </p>
         <div className="grid grid-cols-1 max-w-md gap-4">
           <InstallVideoCard
-            title="วิธีที่ 2: คัดลอกโค้ดติดตั้งเอง"
+            title="คัดลอกโค้ดติดตั้งเอง"
             description="คัดลอกโค้ดสำเร็จรูปของร้านคุณ แล้ววางในหลังบ้านเว็บก่อนแท็กปิด </body> ใช้ได้กับทุกเบราว์เซอร์"
             src="/videos/install-manual.mp4"
             poster="/videos/install-manual-poster.svg"
