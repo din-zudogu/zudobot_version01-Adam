@@ -29,7 +29,6 @@ export default function WidgetEmbedPage() {
   const [saved, setSaved]     = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [tenantId, setTenantId] = useState("");
 
   const loadConfig = useCallback(async () => {
     setLoading(true);
@@ -37,7 +36,6 @@ export default function WidgetEmbedPage() {
     try {
       const res = await fetch("/api/tenant/me", { cache: "no-store" });
       const data = (await res.json()) as {
-        tenantId?: string;
         profile?: {
           embedKey?: string;
           widgetColor?: string;
@@ -60,7 +58,6 @@ export default function WidgetEmbedPage() {
         throw new Error("ไม่พบ embed key ของร้านค้า กรุณารีเฟรชหรือติดต่อผู้ดูแลระบบ");
       }
 
-      setTenantId(data.tenantId ?? "");
       setCfg({
         embedKey: data.profile.embedKey,
         widgetColor: data.profile.widgetColor ?? "#1E5BC6",
@@ -134,7 +131,7 @@ export default function WidgetEmbedPage() {
 
   return (
     <div className="space-y-6">
-      <ZudobotIntegration tenantId={tenantId} embedKey={cfg.embedKey} />
+      <ZudobotIntegration />
 
       {/* Widget appearance — ไม่เกี่ยวกับการฝังสคริปต์ */}
       <div className="max-w-3xl">
