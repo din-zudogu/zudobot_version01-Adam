@@ -29,6 +29,10 @@ export interface ITenantProfile extends Document {
   monthlyMessageResetAt: Date;
   // Embed snippet info
   embedKey: string;               // public key for <script> tag
+  // Set the first time /api/widget/init succeeds for this tenant from an
+  // allowed domain — the "referral installed successfully" signal for the
+  // บอกต่อ (Recommend) program.
+  firstWidgetLoadAt?: Date;
   // Step 4 — Trial
   trialStartedAt?: Date;
   // LINE Messaging API — per-tenant push notification (admin handoff)
@@ -87,6 +91,7 @@ const TenantProfileSchema = new Schema<ITenantProfile>(
       return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     }},
     embedKey:          { type: String, required: true, unique: true },
+    firstWidgetLoadAt: { type: Date },
     trialStartedAt:    { type: Date },
     // LINE Messaging API (admin handoff)
     lineEnabled:       { type: Boolean, default: false },

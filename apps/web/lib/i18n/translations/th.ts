@@ -26,6 +26,7 @@ export const th: Dict = {
     security: "ความปลอดภัย (2FA)",
     account: "บัญชีผู้ใช้",
     business: "ข้อมูลธุรกิจ",
+    recommend: "บอกต่อ",
   },
   header: {
     upgradePlan: "อัปเกรดแผน",

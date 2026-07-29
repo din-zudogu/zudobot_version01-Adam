@@ -8,6 +8,7 @@ import {
   isPlatformSiteWidgetAccess,
 } from "@/lib/widget/platformSiteWidgetAccess";
 import { ensurePlatformSiteTenantProfile } from "@/lib/platform/ensurePlatformSiteTenantProfile";
+import { markFirstWidgetLoadAndAwardReferral } from "@/lib/referral/installDetection";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,12 @@ export async function POST(req: NextRequest) {
     platformSiteAccess;
 
   if (!isAllowed) return forbidden("domain_not_allowed", rawOrigin);
+
+  if (!profile.firstWidgetLoadAt) {
+    void markFirstWidgetLoadAndAwardReferral(profile).catch((err) => {
+      console.error("[widget/init] referral install detection failed:", err);
+    });
+  }
 
   if (platformSiteAccess) {
     const platformHost = getPlatformSiteHostname();

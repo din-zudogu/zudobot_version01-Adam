@@ -26,6 +26,7 @@ export const en: Dict = {
     security: "Security (2FA)",
     account: "Account",
     business: "Business Info",
+    recommend: "Recommend",
   },
   header: {
     upgradePlan: "Upgrade Plan",

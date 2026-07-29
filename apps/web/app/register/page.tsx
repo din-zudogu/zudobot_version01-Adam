@@ -50,6 +50,14 @@ function RegisterForm() {
       // wizard's own scroll-gated modal, not here.
       document.cookie = "zudo-auth-intent=register; path=/; max-age=1800; SameSite=Lax";
 
+      // Referral capture: carries the invite's secret code through the Google
+      // OAuth round trip (query params don't survive it) so onboarding/complete
+      // can match it against the invitee email once the account is created.
+      const ref = searchParams.get("ref");
+      if (ref) {
+        document.cookie = `zudo-referral-code=${encodeURIComponent(ref)}; path=/; max-age=2592000; SameSite=Lax`;
+      }
+
       const plan = searchParams.get("plan");
       const pkg = searchParams.get("pkg");
       let next = "";

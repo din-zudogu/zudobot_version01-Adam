@@ -14,6 +14,8 @@ import { AMPLIFY_CONFIG } from "@/lib/env/amplifyGuardrail";
 import { getPostgresDb } from "@/lib/db/postgres";
 import { businessCategories, signupPurposes } from "@/lib/db/pg/schema";
 import { ensureMasterData } from "@/lib/db/pg/ensureMasterData";
+import { ensureReferralMasterData } from "@/lib/db/pg/ensureReferralMasterData";
+import { findInviteBySecretCode, markInviteSignedUp } from "@/lib/db/referral";
 import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 interface OnboardingBody {
@@ -122,6 +124,27 @@ export async function POST(req: NextRequest) {
           category: "auth", action: "signup", email,
           details: { role: "tenant", initialBotState: "trial" },
         });
+
+        // Referral capture: the invite link's secret code must match both
+        // the invitee email AND the email actually signing up — that pairing
+        // is the "sent to a specific person" verification the spec calls for.
+        const referralCode = req.cookies.get("zudo-referral-code")?.value;
+        if (referralCode) {
+          try {
+            await ensureReferralMasterData();
+            const invite = await findInviteBySecretCode(referralCode);
+            if (
+              invite &&
+              invite.status === "sent" &&
+              invite.inviteeEmail === email &&
+              invite.expiresAt > new Date()
+            ) {
+              await markInviteSignedUp(invite.id, user._id.toString());
+            }
+          } catch (err) {
+            console.error("[onboarding/complete] referral capture failed:", err);
+          }
+        }
       } else if (!user.onboardingComplete) {
         await UserModel.findByIdAndUpdate(user._id, {
           onboardingComplete: true,
@@ -171,6 +194,7 @@ export async function POST(req: NextRequest) {
     );
 
     const res = NextResponse.json({ ok: true }, { status: 200 });
+    res.cookies.delete("zudo-referral-code");
     // Short-lived bypass cookie so middleware skips the onboarding redirect
     // for the next navigation without needing a JWT refresh.
     const isHttps = AMPLIFY_CONFIG.authUrl.startsWith("https://");

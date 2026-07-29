@@ -19,6 +19,7 @@ import {
 } from "@/lib/payment/pmRules";
 import type { BotState } from "@/types";
 import { logSystemEvent } from "@/lib/logging/systemLogger";
+import { awardSubscriptionPoints } from "@/lib/referral/awardSubscriptionPoints";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -216,6 +217,24 @@ async function onInvoicePaid(invoice: Stripe.Invoice) {
     { upsert: true }
   );
   await logPaymentEvent(tenantId, "invoice.payment_succeeded", { amountPaidThb: amountPaid });
+
+  const invoiceAny = invoice as unknown as { period_start?: number; period_end?: number };
+  const periodStart = invoiceAny.period_start ? new Date(invoiceAny.period_start * 1000) : (sub.currentPeriodStart ?? new Date());
+  const periodEnd   = invoiceAny.period_end   ? new Date(invoiceAny.period_end   * 1000) : (sub.currentPeriodEnd   ?? new Date());
+
+  try {
+    await awardSubscriptionPoints({
+      tenantId,
+      invoiceId: invoice.id ?? `${tenantId}-${periodStart.getTime()}`,
+      planId: sub.planId,
+      quotaOrMemoryAddonId: sub.memoryAddonId,
+      retentionAddonId: sub.retentionAddonId,
+      periodStart,
+      periodEnd,
+    });
+  } catch (err) {
+    console.error("[webhook] referral points award failed:", err);
+  }
 }
 
 async function onInvoiceFailed(invoice: Stripe.Invoice) {

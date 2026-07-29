@@ -107,6 +107,107 @@ export async function sendPartnerInviteEmail(opts: {
   });
 }
 
+export async function sendReferralInviteEmail(opts: {
+  to:           string;
+  referrerName: string;
+  signupUrl:    string;
+  secretCode:   string;
+  expiresAt:    Date;
+}) {
+  const { to, referrerName, signupUrl, secretCode, expiresAt } = opts;
+  const expireStr = expiresAt.toLocaleDateString("th-TH", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+  const html = `
+<!DOCTYPE html>
+<html lang="th">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:40px 0">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#1E5BC6;padding:28px 40px;text-align:center">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px">ZUDOBOT</h1>
+            <p style="margin:6px 0 0;color:#a8c4f0;font-size:13px">คำเชิญจากเพื่อน</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 40px">
+            <p style="margin:0 0 16px;font-size:16px;color:#1a2332">
+              สวัสดีค่ะ,
+            </p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4a5568;line-height:1.7">
+              <strong>${referrerName}</strong> แนะนำให้คุณรู้จัก <strong>ZUDOBOT</strong> —
+              แชทบอท AI สำหรับร้านค้าออนไลน์ ที่ช่วยตอบลูกค้าอัตโนมัติ 24 ชั่วโมง
+              ผูกกับหน้าร้านของคุณได้ในไม่กี่นาที พร้อมระบบแนะนำสินค้า จดจำบทสนทนา
+              และเชื่อมต่อ LINE ได้ในตัว
+            </p>
+
+            <!-- Secret code box -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="background:#f0f5ff;border:1px solid #c7d8f8;border-radius:10px;margin:0 0 28px">
+              <tr>
+                <td style="padding:18px 22px">
+                  <p style="margin:0 0 10px;font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">รหัสยืนยันคำเชิญของคุณ</p>
+                  <p style="margin:0 0 10px;font-size:20px;color:#1E5BC6;font-weight:700;letter-spacing:1px">${secretCode}</p>
+                  <p style="margin:0;font-size:13px;color:#4a5568">
+                    ลิงก์สมัครด้านล่างมีรหัสนี้แนบมาให้อัตโนมัติแล้ว — ใช้เพื่อยืนยันว่าคำเชิญนี้ส่งถึง <strong>${to}</strong> โดยเฉพาะ
+                  </p>
+                  <p style="margin:10px 0 0;font-size:13px;color:#e55f00;font-weight:600">
+                    ⏰ ลิงก์นี้หมดอายุวันที่ ${expireStr}
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA button -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="${signupUrl}"
+                    style="display:inline-block;background:#1E5BC6;color:#ffffff;font-size:15px;font-weight:600;
+                           text-decoration:none;padding:14px 44px;border-radius:10px;letter-spacing:0.2px">
+                    เริ่มต้นใช้งาน ZUDOBOT →
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6">
+              หากลิงก์ด้านบนใช้ไม่ได้ ให้คัดลอก URL นี้ไปวางในเบราว์เซอร์:<br>
+              <span style="color:#1E5BC6;word-break:break-all">${signupUrl}</span>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8faff;border-top:1px solid #e5eaf5;padding:20px 40px;text-align:center">
+            <p style="margin:0;font-size:12px;color:#9ca3af">
+              © 2025 Zudogu Co., Ltd. • อีเมลนี้ส่งโดยระบบบอกต่อของ ZUDOBOT ตามคำขอของ ${referrerName}
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: `${referrerName} ชวนคุณมาลองใช้ ZUDOBOT`,
+    html,
+  });
+}
+
 export async function sendPartnerConsolidatedInvoiceEmail(opts: {
   to:           string;
   companyName:  string;

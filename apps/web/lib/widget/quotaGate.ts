@@ -22,6 +22,8 @@ import { getPlatformSettings } from "@/lib/db/models/PlatformSettings";
 import { isMemoryLimitExceeded } from "@/lib/memory/memoryService";
 import { logSystemEventAsync } from "@/lib/logging/systemLogger";
 import { applyReadyPackageToTenant } from "@/lib/payment/applyReadyPackage";
+import { getActiveRedemption } from "@/lib/db/referral";
+import { sumActiveBonus } from "@/lib/referral/pointsEngine";
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -100,13 +102,28 @@ async function resolveLimits(tenantId: string): Promise<QuotaLimits> {
 
   const msgPerMonth   = planPkg?.msgPerMonth  ?? -1;
   const extraMsg      = quotaPkg?.extraMsgPerMonth ?? 0;
-  const totalMonthly  = msgPerMonth < 0 ? -1 : msgPerMonth + extraMsg;
-  const retentionDays = retPkg?.retentionDays ?? 7;
+  const baseRetention = retPkg?.retentionDays ?? 7;
 
   // Legacy memory check (only for old memory_addon subscriptions)
-  const memoryMb = quotaPkg?.packageType === "memory_addon"
+  const baseMemoryMb = quotaPkg?.packageType === "memory_addon"
     ? (quotaPkg.memoryMb ?? -1)
     : undefined;
+
+  // บอกต่อ (Recommend) redeemed-tier bonus — combines additively on top of
+  // base plan + paid add-on, same pattern as the quota add-on above.
+  let referralBonus = { bonusMsgPerMonth: 0, bonusRetentionDays: 0, bonusMemoryMb: 0 };
+  try {
+    const active = await getActiveRedemption(tenantId);
+    referralBonus = sumActiveBonus(active?.tier ?? null);
+  } catch {
+    // Postgres unavailable — fall back to no bonus rather than blocking chat.
+  }
+
+  const totalMonthly  = msgPerMonth < 0 ? -1 : msgPerMonth + extraMsg + referralBonus.bonusMsgPerMonth;
+  const retentionDays = baseRetention < 0 ? -1 : baseRetention + referralBonus.bonusRetentionDays;
+  const memoryMb = baseMemoryMb !== undefined && baseMemoryMb >= 0
+    ? baseMemoryMb + referralBonus.bonusMemoryMb
+    : baseMemoryMb;
 
   return {
     msgPerMonth:      totalMonthly,
