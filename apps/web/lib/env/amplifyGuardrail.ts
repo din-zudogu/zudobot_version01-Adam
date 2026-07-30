@@ -54,6 +54,13 @@ const STATIC_ENV_SNAPSHOT: Record<string, string | undefined> = {
   // Quick-Create template customers launch to grant CodeCommit cross-account
   // access (no long-lived customer secret keys involved for this path).
   ZUDOBOT_AWS_ACCOUNT_ID:         process.env.ZUDOBOT_AWS_ACCOUNT_ID,
+  // ── Platform AWS IAM user (already provisioned in Amplify Console) —
+  // used for S3 access (payment-slip image storage). Named to match the
+  // existing Console var names rather than the SDK's default AWS_* names.
+  ACCESS_KEY:                     process.env.ACCESS_KEY,
+  ACCESS_SECRET_KEY:              process.env.ACCESS_SECRET_KEY,
+  REGION:                         process.env.REGION,
+  PAYMENT_SLIPS_S3_BUCKET:        process.env.PAYMENT_SLIPS_S3_BUCKET,
 };
 
 function readEnv(name: string): string | undefined {
@@ -191,5 +198,20 @@ export const AMPLIFY_CONFIG = {
   },
   get zudobotAwsAccountId() {
     return requireAmplifyEnv("ZUDOBOT_AWS_ACCOUNT_ID");
+  },
+  // ── S3 (payment-slip image storage) — feature-scoped like git-connect
+  // above: only the storage module throws when actually accessed and
+  // missing, so an unconfigured bucket doesn't block the rest of the app.
+  get awsAccessKeyId() {
+    return requireAmplifyEnv("ACCESS_KEY");
+  },
+  get awsSecretAccessKey() {
+    return requireAmplifyEnv("ACCESS_SECRET_KEY");
+  },
+  get awsRegion() {
+    return requireAmplifyEnv("REGION");
+  },
+  get paymentSlipsS3Bucket() {
+    return requireAmplifyEnv("PAYMENT_SLIPS_S3_BUCKET");
   },
 };

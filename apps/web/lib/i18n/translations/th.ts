@@ -27,6 +27,7 @@ export const th: Dict = {
     account: "บัญชีผู้ใช้",
     business: "ข้อมูลธุรกิจ",
     recommend: "บอกต่อ",
+    paymentMethods: "ช่องทางรับชำระเงิน",
   },
   header: {
     upgradePlan: "อัปเกรดแผน",

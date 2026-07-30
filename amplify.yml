@@ -39,7 +39,8 @@ applications:
                        COMPANY_TAX_ID MONGO_DNS_SERVERS WIDGET_SCRIPT_INTEGRITY DATABASE_URL DIRECT_URL \
                        GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET GITLAB_CLIENT_ID GITLAB_CLIENT_SECRET \
                        BITBUCKET_CLIENT_ID BITBUCKET_CLIENT_SECRET ANTHROPIC_API_KEY GIT_OAUTH_TOKEN_ENCRYPTION_KEY \
-                       ZUDOBOT_AWS_ACCOUNT_ID; do
+                       ZUDOBOT_AWS_ACCOUNT_ID ACCESS_KEY ACCESS_SECRET_KEY REGION PAYMENT_SLIPS_S3_BUCKET \
+                       SLIP_VERIFICATION_CONFIDENCE_THRESHOLD; do
                 if [ -n "${!v}" ]; then echo "$v=${!v}" >> apps/web/.env.production; fi
               done
             - env | grep -e '^NEXT_PUBLIC_' >> apps/web/.env.production || true

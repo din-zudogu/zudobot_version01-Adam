@@ -29,6 +29,7 @@ const TYPE_ICON: Record<string, string> = {
   kyc_rejected:       "❌",
   plan_upgraded:      "🚀",
   system_announcement:"📢",
+  quota_renewal_7days:"📦",
 };
 
 function timeAgo(dateStr: string): string {

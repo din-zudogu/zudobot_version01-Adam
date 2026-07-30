@@ -5,8 +5,10 @@
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
+  doublePrecision,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -214,4 +216,55 @@ export const gitInstallJobs = pgTable("git_install_jobs", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Tenant "Payment Methods" (PromptPay QR / bank transfer + slip verification) ──
+// tenantId mirrors Mongo's User._id.toString() (same convention as gitConnections
+// above) — not a Postgres FK, tenants stay canonical in Mongo. This is for a
+// tenant's OWN end-customers paying the tenant directly — unrelated to
+// ZUDOBOT's own SaaS billing (Stripe/Subscription/Invoice, already on Mongo).
+
+// One row per tenant — how their customers can pay them.
+export const paymentMethodConfig = pgTable("payment_method_config", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).notNull().unique(),
+
+  promptpayId: varchar("promptpay_id", { length: 32 }), // Thai mobile number or 13-digit citizen/tax ID
+  promptpayEnabled: boolean("promptpay_enabled").notNull().default(false),
+
+  bankName: varchar("bank_name", { length: 128 }),
+  bankAccountNumber: varchar("bank_account_number", { length: 32 }),
+  bankAccountName: varchar("bank_account_name", { length: 255 }),
+  bankTransferEnabled: boolean("bank_transfer_enabled").notNull().default(false),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Ledger of payments a tenant's customers made, submitted as a slip photo in
+// the widget chat. `verificationMethod` is kept generic ('gemini_vision' today,
+// 'bank_api' as a future drop-in) so a real bank-verification API can be added
+// later without a schema change.
+export const paymentTrans = pgTable("payment_trans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: varchar("tenant_id", { length: 64 }).notNull(),
+
+  amountThb: numeric("amount_thb", { precision: 12, scale: 2 }).notNull(),
+  method: varchar("method", { length: 24 }).notNull(), // 'promptpay' | 'bank_transfer'
+  sessionId: varchar("session_id", { length: 128 }), // ConversationSession this slip came from
+
+  slipS3Key: text("slip_s3_key"),
+
+  verificationMethod: varchar("verification_method", { length: 24 }).notNull().default("gemini_vision"),
+  confidence: doublePrecision("confidence"),
+  extractedBankName: varchar("extracted_bank_name", { length: 128 }),
+  extractedRef: varchar("extracted_ref", { length: 128 }),
+  extractedDateTime: varchar("extracted_datetime", { length: 64 }), // raw text as read off the slip — not parsed to a real Date
+
+  status: varchar("status", { length: 24 }).notNull().default("pending_review"),
+  // 'auto_verified' | 'pending_review' | 'confirmed' | 'rejected'
+  reviewedBy: varchar("reviewed_by", { length: 64 }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

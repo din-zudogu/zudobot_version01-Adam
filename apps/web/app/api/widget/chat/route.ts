@@ -16,6 +16,7 @@ import { logRagEvent } from "@/lib/knowledge/ragEventLogger";
 import { sendHandoffAlert } from "@/lib/services/lineNotify";
 import { detectHandoffIntent } from "@/lib/handoff/handoffDetector";
 import { unrecord_pii } from "@/lib/security/unrecordPii";
+import { maybeHandleSlipAttachment } from "@/lib/payment/handleSlipAttachment";
 import { enforceRateLimit, clientIp } from "@/lib/security/rateLimit";
 import {
   collectEffectiveAllowedDomains,
@@ -419,6 +420,12 @@ export async function POST(req: NextRequest) {
       : pastMemoryContext;
   }
 
+  // ── 4d. Payment-slip detection (non-fatal — never blocks the chat) ───
+  let slipDirective: string | null = null;
+  if (safeAttachments.length > 0) {
+    slipDirective = await maybeHandleSlipAttachment(tenantId, sessionId!, safeAttachments).catch(() => null);
+  }
+
   // ── 5. Call Gemini ────────────────────────────────────────────────
   let reply: string;
   let aiError: string | undefined;
@@ -433,6 +440,7 @@ export async function POST(req: NextRequest) {
       knowledgeContext,
       profile.botGender,
       safeAttachments.length > 0 ? safeAttachments : undefined,
+      slipDirective ?? undefined,
     );
     // Option C safety net: ensure reply ends on a complete sentence
     reply   = trimToCompleteSentence(result.reply);

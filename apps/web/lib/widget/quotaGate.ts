@@ -61,7 +61,7 @@ function isNewMonth(resetAt: Date): boolean {
   );
 }
 
-async function resolveLimits(tenantId: string): Promise<QuotaLimits> {
+export async function resolveLimits(tenantId: string): Promise<QuotaLimits> {
   const [sub, cfg] = await Promise.all([
     SubscriptionModel.findOne({ tenantId }),
     getPlatformSettings(),

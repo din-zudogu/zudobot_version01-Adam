@@ -37,6 +37,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/memory",        icon: "💾", key: "nav.memory" },
   { href: "/dashboard/notifications", icon: "🔔", key: "nav.lineNotifications" },
   { href: "/dashboard/billing",       icon: "💳", key: "nav.billing" },
+  { href: "/dashboard/payment-methods", icon: "🏧", key: "nav.paymentMethods" },
   { href: "/dashboard/recommend",     icon: "🎁", key: "nav.recommend" },
   { href: "/dashboard/kyc",           icon: "🔖", key: "nav.kyc" },
   { href: "/dashboard/privacy",       icon: "🔒", key: "nav.privacy" },

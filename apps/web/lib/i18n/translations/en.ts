@@ -27,6 +27,7 @@ export const en: Dict = {
     account: "Account",
     business: "Business Info",
     recommend: "Recommend",
+    paymentMethods: "Payment Methods",
   },
   header: {
     upgradePlan: "Upgrade Plan",

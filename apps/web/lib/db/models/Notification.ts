@@ -16,7 +16,8 @@ export type NotificationType =
   | "kyc_rejected"
   | "plan_upgraded"
   | "system_announcement"
-  | "promptpay_renewal_3days";
+  | "promptpay_renewal_3days"
+  | "quota_renewal_7days";
 
 export interface INotification extends Document {
   tenantId:   string;

@@ -9,6 +9,7 @@
  * 5. Clean up expired conversation sessions (belt-and-suspenders; TTL index is primary)
  * 6. Send retention warning notifications (N days before data expires)
  * 7. Send trial expiry warning notifications (3 days before trial ends)
+ * 9. Send quota-renewal warning notifications (7 days before a paid period ends)
  */
 
 import { connectDB } from "@/lib/db/connect";
@@ -25,6 +26,7 @@ import { cleanupExpiredSessions, getTenantsWithExpiringData } from "@/lib/memory
 import { createNotification, notificationSentToday } from "@/lib/notifications/notificationService";
 import { sendEmail, promptPayRenewalHtml } from "@/lib/email/resend";
 import { AMPLIFY_CONFIG } from "@/lib/env/amplifyGuardrail";
+import { resolveLimits } from "@/lib/widget/quotaGate";
 import type { BotState } from "@/types";
 import { logSystemEventAsync } from "@/lib/logging/systemLogger";
 
@@ -37,6 +39,7 @@ export interface DailyCheckResult {
   retentionWarnings:     number;
   trialWarnings:         number;
   promptPayReminders:    number;
+  quotaRenewalWarnings:  number;
   partnersHardDeleted:   number;
 }
 
@@ -45,7 +48,7 @@ export async function runDailyCheck(now = new Date()): Promise<DailyCheckResult>
   const result: DailyCheckResult = {
     quotaReset: 0, trialExpired: 0, graceExpired: 0, stateTransitions: 0,
     sessionsCleared: 0, retentionWarnings: 0, trialWarnings: 0, promptPayReminders: 0,
-    partnersHardDeleted: 0,
+    quotaRenewalWarnings: 0, partnersHardDeleted: 0,
   };
 
   const cfg = await getPlatformSettings();
@@ -273,6 +276,44 @@ export async function runDailyCheck(now = new Date()): Promise<DailyCheckResult>
     }
 
     result.promptPayReminders++;
+  }
+
+  // ── 9. Quota-renewal warning (7 days before a paid period ends) ─────
+  // Generalizes the PromptPay-only reminder above to ALL paid subscriptions —
+  // shows quota used/remaining % and links straight to Billing to buy more.
+  const quotaWarnAt = new Date(now.getTime() + 7 * 86_400_000);
+  const expiringPaidSubs = await SubscriptionModel.find({
+    planId:  { $ne: "trial" },
+    status:  "active",
+    currentPeriodEnd: { $gte: now, $lte: quotaWarnAt },
+  });
+
+  for (const sub of expiringPaidSubs) {
+    const tid = sub.tenantId.toString();
+    if (await notificationSentToday(tid, "quota_renewal_7days")) continue;
+
+    const profile = await TenantProfileModel.findOne({ tenantId: tid });
+    if (!profile) continue;
+
+    const limits = await resolveLimits(tid);
+    if (!limits.isMonthly || limits.msgPerMonth == null || limits.msgPerMonth < 0) continue;
+
+    const used    = profile.monthlyMessageCount ?? 0;
+    const percentUsed      = Math.min(100, Math.round((used / limits.msgPerMonth) * 100));
+    const percentRemaining = Math.max(0, 100 - percentUsed);
+
+    const daysLeft = Math.max(1, Math.ceil(
+      ((sub.currentPeriodEnd?.getTime() ?? 0) - now.getTime()) / 86_400_000
+    ));
+
+    await createNotification(
+      tid,
+      "quota_renewal_7days",
+      `แพ็กเกจจะครบรอบใน ${daysLeft} วัน — ใช้โควต้าไปแล้ว ${percentUsed}%`,
+      `ใช้ข้อความไปแล้ว ${used.toLocaleString()} จาก ${limits.msgPerMonth.toLocaleString()} ข้อความ (เหลืออีก ${percentRemaining}%) — ต่ออายุหรือซื้อโควต้าเพิ่มได้ที่นี่`,
+      "/dashboard/billing",
+    );
+    result.quotaRenewalWarnings++;
   }
 
   // ── Hard-delete partners soft-deleted > 90 days ago ───────────────
