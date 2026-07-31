@@ -235,7 +235,7 @@ export async function POST(req: NextRequest) {
       console.info("[stripe/checkout] authority retail THB:", authority.customerChargeThb);
     }
 
-    const checkoutUrl = await createCheckoutSession({
+    const { url: checkoutUrl } = await createCheckoutSession({
       tenantId, email: user.email, name: user.name, customerId,
       planId, memoryId, retentionId, paymentMethod,
     });

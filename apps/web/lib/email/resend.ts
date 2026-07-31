@@ -288,6 +288,95 @@ export async function sendPartnerConsolidatedInvoiceEmail(opts: {
   });
 }
 
+export async function sendAdminSubscribeForCustomerEmail(opts: {
+  to:         string;
+  name:       string;
+  planLabel:  string;
+  totalThb:   number;
+  checkoutUrl: string;
+}) {
+  const { to, name, planLabel, totalThb, checkoutUrl } = opts;
+  const html = `
+<!DOCTYPE html>
+<html lang="th">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:40px 0">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#1E5BC6;padding:28px 40px;text-align:center">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px">ZUDOBOT</h1>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 40px">
+            <p style="margin:0 0 16px;font-size:16px;color:#1a2332">สวัสดีคุณ <strong>${name}</strong>,</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4a5568;line-height:1.7">
+              ทีมงาน Zudobot ได้เตรียมแพ็กเกจ <strong>${planLabel}</strong> ให้คุณแล้ว
+              กรุณาชำระเงินผ่าน PromptPay เพื่อเปิดใช้งานแพ็กเกจ
+            </p>
+
+            <!-- Plan summary box -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="background:#f0f5ff;border:1px solid #c7d8f8;border-radius:10px;margin:0 0 28px">
+              <tr>
+                <td style="padding:18px 22px">
+                  <p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">แพ็กเกจ</p>
+                  <p style="margin:0 0 2px;font-size:17px;font-weight:700;color:#1a2332">${planLabel}</p>
+                  <p style="margin:0;font-size:14px;color:#4a5568">฿${totalThb.toLocaleString("th-TH")} (รวม VAT)</p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA button -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="${checkoutUrl}"
+                    style="display:inline-block;background:#1E5BC6;color:#ffffff;font-size:15px;font-weight:600;
+                           text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:0.2px">
+                    ชำระเงินผ่าน PromptPay →
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;text-align:center;line-height:1.6">
+              ลิงก์นี้เปิดหน้าชำระเงินที่ปลอดภัยของ Stripe ซึ่งจะแสดง QR PromptPay ตามยอดด้านบน<br>
+              หากลิงก์ด้านบนใช้ไม่ได้ ให้คัดลอก URL นี้ไปวางในเบราว์เซอร์:<br>
+              <span style="color:#1E5BC6;word-break:break-all">${checkoutUrl}</span>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8faff;border-top:1px solid #e5eaf5;padding:20px 40px;text-align:center">
+            <p style="margin:0;font-size:12px;color:#9ca3af">
+              © 2025 Zudogu Co., Ltd. • ส่งโดยทีมงาน Zudobot
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: `แพ็กเกจ ${planLabel} ของคุณพร้อมชำระเงินแล้ว — ZUDOBOT`,
+    html,
+  });
+}
+
 export function promptPayRenewalHtml(opts: {
   name:       string;
   planLabel:  string;

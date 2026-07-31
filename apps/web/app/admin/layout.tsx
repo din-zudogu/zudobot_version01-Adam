@@ -35,6 +35,7 @@ const NAV: NavEntry[] = [
   { kind: "item", href: "/admin/revenue",      icon: "📊", label: "Revenue" },
   { kind: "item", href: "/admin/recommend",    icon: "🎁", label: "โปรแกรมบอกต่อ (Recommend)" },
   { kind: "item", href: "/admin/payment-transactions", icon: "🏧", label: "รายการรับชำระเงินร้านค้า" },
+  { kind: "item", href: "/admin/subscribe-for-customer", icon: "💳", label: "สมัครแพ็กเกจแทนลูกค้า" },
   { kind: "item", href: "/admin/centralized",  icon: "🗄",  label: "Big Data" },
   { kind: "item", href: "/admin/articles",     icon: "📝", label: "Delete Account" },
 ];

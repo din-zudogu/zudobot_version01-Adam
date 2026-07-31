@@ -103,7 +103,9 @@ export interface CheckoutOptions {
   paymentMethod:  "card" | "promptpay";
 }
 
-export async function createCheckoutSession(opts: CheckoutOptions): Promise<string> {
+export async function createCheckoutSession(
+  opts: CheckoutOptions
+): Promise<{ url: string; sessionId: string }> {
   const stripe = getStripe();
 
   const customerId = await ensureStripeCustomer(
@@ -145,7 +147,7 @@ export async function createCheckoutSession(opts: CheckoutOptions): Promise<stri
       payment_intent_data: { metadata: { ...commonMeta, isPromptPay: "true" } },
     });
 
-    return session.url!;
+    return { url: session.url!, sessionId: session.id };
   }
 
   // ── Card: recurring Stripe Subscription ──────────────────────────
@@ -162,7 +164,7 @@ export async function createCheckoutSession(opts: CheckoutOptions): Promise<stri
     subscription_data: { metadata: commonMeta },
   });
 
-  return session.url!;
+  return { url: session.url!, sessionId: session.id };
 }
 
 // ── Create checkout session (custom amount — ReadyPackage / CustomPackage) ──
