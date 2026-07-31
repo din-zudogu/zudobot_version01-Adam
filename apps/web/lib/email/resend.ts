@@ -364,6 +364,53 @@ export async function sendAdminCreatedTenantWelcomeEmail(opts: {
   });
 }
 
+export async function sendFreePackageActivatedEmail(opts: {
+  to:          string;
+  name:        string;
+  packageName: string;
+}) {
+  const { to, name, packageName } = opts;
+  const html = `
+<!DOCTYPE html>
+<html lang="th">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:40px 0">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+        <tr>
+          <td style="background:#1E5BC6;padding:28px 40px;text-align:center">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px">ZUDOBOT</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px">
+            <p style="margin:0 0 16px;font-size:16px;color:#1a2332">สวัสดีคุณ <strong>${name}</strong>,</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4a5568;line-height:1.7">
+              ทีมงาน Zudobot ได้เปิดใช้งานแพ็กเกจ <strong>${packageName}</strong> ให้คุณเรียบร้อยแล้ว
+              — ไม่มีค่าใช้จ่าย ใช้งานได้ทันที เข้าสู่ระบบด้วยบัญชี Google ของคุณเพื่อเริ่มใช้งาน
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f8faff;border-top:1px solid #e5eaf5;padding:20px 40px;text-align:center">
+            <p style="margin:0;font-size:12px;color:#9ca3af">© 2025 Zudogu Co., Ltd. • ส่งโดยทีมงาน Zudobot</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: `แพ็กเกจ ${packageName} เปิดใช้งานแล้ว — ZUDOBOT`,
+    html,
+  });
+}
+
 export async function sendAdminSubscribeForCustomerEmail(opts: {
   to:         string;
   name:       string;

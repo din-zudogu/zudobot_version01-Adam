@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ url: "/dashboard/overview?trial=1" });
       }
 
-      const url = await createCustomAmountCheckoutSession({
+      const { url } = await createCustomAmountCheckoutSession({
         tenantId,
         email:        user.email,
         name:         user.name ?? user.email,
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
       const description = parts.join(" + ");
       const nickname    = `custom_${ids.sort().join("_")}`.slice(0, 250);
 
-      const url = await createCustomAmountCheckoutSession({
+      const { url } = await createCustomAmountCheckoutSession({
         tenantId,
         email:        user.email,
         name:         user.name ?? user.email,

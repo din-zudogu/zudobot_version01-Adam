@@ -1,10 +1,18 @@
 /**
  * POST /api/admin/subscribe-for-customer
  * Admin/partner subscribes an EXISTING customer (identified by their Google
- * account email) to a paid plan. Creates a Stripe PromptPay Checkout Session
- * (Stripe renders the QR for the exact amount on its own hosted page) and
- * emails the checkout link to the customer. Payment confirmation happens via
- * the existing /api/stripe/webhook — no new activation logic here.
+ * account email) to a plan on their behalf — either the legacy plan/memory/
+ * retention combo, or a ready-made package from the ReadyPackage catalog
+ * (the same one shown on the public pricing page).
+ *
+ * Paid: creates a Stripe PromptPay Checkout Session (Stripe renders the QR
+ * for the exact amount on its own hosted page) and emails the checkout link
+ * to the customer. Payment confirmation happens via the existing
+ * /api/stripe/webhook — no new activation logic here.
+ *
+ * Free (ready package with finalRetailPrice <= 0, e.g. a trial/lifetime
+ * package): activated immediately via applyReadyPackageToTenant, same as
+ * the tenant self-checkout free-package path — no payment needed.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getServerToken } from "@/lib/auth/getServerToken";
@@ -12,7 +20,8 @@ import { connectDB } from "@/lib/db/connect";
 import { UserModel } from "@/lib/db/models/User";
 import { SubscriptionModel } from "@/lib/db/models/Subscription";
 import { PartnerProfileModel } from "@/lib/db/models/PartnerProfile";
-import { createCheckoutSession } from "@/lib/stripe/helpers";
+import { ReadyPackageModel } from "@/lib/db/models/ReadyPackage";
+import { createCheckoutSession, createCustomAmountCheckoutSession } from "@/lib/stripe/helpers";
 import {
   PLAN_CATALOG,
   MEMORY_ADDON_CATALOG,
@@ -23,7 +32,8 @@ import {
   type MemoryAddonId,
   type RetentionAddonId,
 } from "@/lib/payment/pmRules";
-import { sendAdminSubscribeForCustomerEmail } from "@/lib/email/resend";
+import { applyReadyPackageToTenant } from "@/lib/payment/applyReadyPackage";
+import { sendAdminSubscribeForCustomerEmail, sendFreePackageActivatedEmail } from "@/lib/email/resend";
 import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 function requireAllowedRole(role?: string) {
@@ -34,11 +44,20 @@ const VALID_PLANS: PlanId[] = ["starter", "pro", "master"];
 const VALID_MEMORY: MemoryAddonId[] = ["free", "small", "medium", "large"];
 const VALID_RETENTION: RetentionAddonId[] = ["standard", "1month", "3months", "6months"];
 
-interface Body {
+interface LegacyBody {
   email:       string;
   planId:      PlanId;
   memoryId:    MemoryAddonId;
   retentionId: RetentionAddonId;
+}
+interface ReadyPackageBody {
+  email:          string;
+  readyPackageId: string;
+}
+type Body = LegacyBody | ReadyPackageBody;
+
+function isReadyPackageBody(b: Body): b is ReadyPackageBody {
+  return "readyPackageId" in b && typeof b.readyPackageId === "string" && b.readyPackageId.length > 0;
 }
 
 export async function POST(req: NextRequest) {
@@ -55,17 +74,19 @@ export async function POST(req: NextRequest) {
   }
 
   const email = String(body.email ?? "").trim().toLowerCase();
-  const { planId, memoryId, retentionId } = body;
-
   if (!email.includes("@")) {
     return NextResponse.json({ error: "email_invalid" }, { status: 400 });
   }
-  if (
-    !VALID_PLANS.includes(planId) ||
-    !VALID_MEMORY.includes(memoryId) ||
-    !VALID_RETENTION.includes(retentionId)
-  ) {
-    return NextResponse.json({ error: "invalid_plan_combo" }, { status: 400 });
+
+  if (!isReadyPackageBody(body)) {
+    const { planId, memoryId, retentionId } = body;
+    if (
+      !VALID_PLANS.includes(planId) ||
+      !VALID_MEMORY.includes(memoryId) ||
+      !VALID_RETENTION.includes(retentionId)
+    ) {
+      return NextResponse.json({ error: "invalid_plan_combo" }, { status: 400 });
+    }
   }
 
   try {
@@ -88,6 +109,80 @@ export async function POST(req: NextRequest) {
       if (!owned) return NextResponse.json({ error: "tenant_not_owned" }, { status: 403 });
     }
 
+    const actorEmail = token!.email?.toLowerCase();
+
+    // ── Ready package flow ────────────────────────────────────────────────
+    if (isReadyPackageBody(body)) {
+      const pkg = await ReadyPackageModel.findById(body.readyPackageId);
+      if (!pkg || !pkg.isActive || !pkg.isOnSale) {
+        return NextResponse.json({ error: "package_not_found" }, { status: 404 });
+      }
+
+      const amountThb = pkg.finalRetailPrice ?? 0;
+
+      // Free / trial / lifetime package — activate immediately, no payment.
+      if (amountThb <= 0) {
+        await applyReadyPackageToTenant(tenantId, pkg);
+
+        await logSystemEvent({
+          category: "payment", action: "admin_subscribe_for_customer_free",
+          email: user.email, actorEmail,
+          details: { tenantId, readyPackageId: body.readyPackageId, packageName: pkg.name },
+        });
+
+        try {
+          await sendFreePackageActivatedEmail({
+            to: user.email, name: user.name ?? user.email, packageName: pkg.name,
+          });
+        } catch (err) {
+          console.error("[admin/subscribe-for-customer] free-package email failed:", err);
+        }
+
+        return NextResponse.json({ ok: true, free: true, planName: pkg.name, customerEmail: user.email });
+      }
+
+      // Paid package — PromptPay checkout for the package's own retail price.
+      const existingSub = await SubscriptionModel.findOne({ tenantId }).select("stripeCustomerId").lean();
+      const { url, sessionId } = await createCustomAmountCheckoutSession({
+        tenantId,
+        email:        user.email,
+        name:         user.name ?? user.email,
+        customerId:   existingSub?.stripeCustomerId,
+        amountThb,
+        productName:  pkg.name,
+        description:  `${pkg.name} (สมัครแทนโดยแอดมิน)`,
+        nickname:     `ready_pkg_${body.readyPackageId}`,
+        paymentMethod: "promptpay",
+        metadata: {
+          tenantId,
+          readyPackageId: body.readyPackageId,
+          packageName:    pkg.name,
+          amountThb:      String(amountThb),
+        },
+      });
+
+      try {
+        await sendAdminSubscribeForCustomerEmail({
+          to: user.email, name: user.name ?? user.email, planLabel: pkg.name,
+          totalThb: amountThb, checkoutUrl: url,
+        });
+      } catch (err) {
+        console.error("[admin/subscribe-for-customer] email send failed:", err);
+      }
+
+      await logSystemEvent({
+        category: "payment", action: "admin_subscribe_for_customer",
+        email: user.email, actorEmail,
+        details: { tenantId, readyPackageId: body.readyPackageId, packageName: pkg.name, totalThb: amountThb, sessionId },
+      });
+
+      return NextResponse.json({
+        ok: true, sessionId, checkoutUrl: url, totalThb: amountThb, customerEmail: user.email,
+      });
+    }
+
+    // ── Legacy plan/memory/retention flow ───────────────────────────────────
+    const { planId, memoryId, retentionId } = body;
     const existingSub = await SubscriptionModel.findOne({ tenantId }).select("stripeCustomerId").lean();
     const customerId  = existingSub?.stripeCustomerId;
 
@@ -121,7 +216,7 @@ export async function POST(req: NextRequest) {
       category:   "payment",
       action:     "admin_subscribe_for_customer",
       email:      user.email,
-      actorEmail: token!.email?.toLowerCase(),
+      actorEmail,
       details:    { tenantId, planId, memoryId, retentionId, totalThb: breakdown.total, sessionId },
     });
 

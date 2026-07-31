@@ -183,7 +183,7 @@ export interface CustomAmountCheckoutOptions {
 
 export async function createCustomAmountCheckoutSession(
   opts: CustomAmountCheckoutOptions,
-): Promise<string> {
+): Promise<{ url: string; sessionId: string }> {
   const stripe = getStripe();
 
   const customerId = await ensureStripeCustomer(
@@ -211,7 +211,7 @@ export async function createCustomAmountCheckoutSession(
       metadata:    { ...opts.metadata, isPromptPay: "true" },
       payment_intent_data: { metadata: { ...opts.metadata, isPromptPay: "true" } },
     });
-    return session.url!;
+    return { url: session.url!, sessionId: session.id };
   }
 
   // ── Card: recurring Stripe Subscription ──────────────────────────────────────
@@ -248,7 +248,7 @@ export async function createCustomAmountCheckoutSession(
     subscription_data: { metadata: opts.metadata },
   });
 
-  return session.url!;
+  return { url: session.url!, sessionId: session.id };
 }
 
 // ── Create billing portal session ────────────────────────────────
