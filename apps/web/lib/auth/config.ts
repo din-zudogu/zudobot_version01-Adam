@@ -11,7 +11,9 @@ import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 interface ImpersonatingData {
   originalTenantId: string;
+  originalSub:      string;
   originalRole:     string;
+  originalRoles:    string[];
   clientName:       string;
   partnerId:        string;
   initiatedBy:      "partner_admin" | "admin" | "super_admin";
@@ -40,7 +42,7 @@ interface ZudobotSession extends Session {
     onboardingComplete?: boolean;
     pendingDeleteAt?: string;
     deletedByAdmin?:  boolean;
-    impersonating?:   Omit<ImpersonatingData, "originalRole">;
+    impersonating?:   Omit<ImpersonatingData, "originalRole" | "originalRoles" | "originalSub">;
   };
 }
 
@@ -212,7 +214,9 @@ export const authConfig: NextAuthConfig = {
       if (imp && imp.expiresAt !== undefined && imp.expiresAt < Math.floor(Date.now() / 1000)) {
         const t = token as ZudobotJWT;
         t.tenantId = imp.originalTenantId;
+        t.sub      = imp.originalSub;
         t.role     = imp.originalRole;
+        t.roles    = imp.originalRoles;
         delete t.impersonating;
       }
 
@@ -226,7 +230,9 @@ export const authConfig: NextAuthConfig = {
           const initiatedBy = (t.role === "partner_admin" ? "partner_admin" : t.role) as ImpersonatingData["initiatedBy"];
           t.impersonating = {
             originalTenantId: (t.tenantId ?? t.sub) as string,
+            originalSub:      t.sub as string,
             originalRole:     t.role as string,
+            originalRoles:    [...(t.roles ?? [])],
             clientName:       payload.clientName as string,
             partnerId:        payload.partnerId  as string,
             initiatedBy,
@@ -234,7 +240,16 @@ export const authConfig: NextAuthConfig = {
             // impersonation is permanent (exited explicitly via the banner).
             expiresAt: initiatedBy === "partner_admin" ? Math.floor(Date.now() / 1000) + 7200 : undefined,
           };
-          t.tenantId = payload.tenantId as string;
+          // Every /api/tenant/** route authorizes on role==="tenant" and reads
+          // tenantId from token.sub directly — swap both so the impersonated
+          // session reads exactly like a real tenant session to every existing
+          // consumer, instead of having to special-case impersonation in
+          // dozens of route handlers.
+          t.tenantId            = payload.tenantId as string;
+          t.sub                 = payload.tenantId as string;
+          t.role                = "tenant";
+          t.roles               = ["tenant"];
+          t.onboardingComplete  = true;
           return token;
         }
 
@@ -242,7 +257,9 @@ export const authConfig: NextAuthConfig = {
           const prev = t.impersonating;
           if (prev) {
             t.tenantId = prev.originalTenantId;
+            t.sub      = prev.originalSub;
             t.role     = prev.originalRole;
+            t.roles    = prev.originalRoles;
             delete t.impersonating;
           }
           return token;

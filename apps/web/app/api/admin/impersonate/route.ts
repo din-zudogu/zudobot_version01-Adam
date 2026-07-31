@@ -12,6 +12,7 @@ import { getServerToken } from "@/lib/auth/getServerToken";
 import { connectDB } from "@/lib/db/connect";
 import { UserModel } from "@/lib/db/models/User";
 import { TenantProfileModel } from "@/lib/db/models/TenantProfile";
+import { logSystemEvent } from "@/lib/logging/systemLogger";
 
 function requireAdmin(role?: string) {
   return role === "admin" || role === "super_admin";
@@ -39,6 +40,14 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "tenant_not_found" }, { status: 404 });
 
   const clientName = profile?.businessName || user.name || tenantId;
+
+  await logSystemEvent({
+    category:   "admin_action",
+    action:     "admin_impersonate_start",
+    email:      user.email,
+    actorEmail: token!.email?.toLowerCase(),
+    details:    { tenantId, clientName },
+  });
 
   return NextResponse.json({ ok: true, tenantId, clientName });
 }

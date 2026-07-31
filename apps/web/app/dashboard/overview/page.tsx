@@ -110,7 +110,7 @@ export default function DashboardOverviewPage() {
 
   useEffect(() => {
     fetch("/api/tenant/me")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => { setMe(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
