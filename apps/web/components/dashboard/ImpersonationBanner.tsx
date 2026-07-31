@@ -9,15 +9,18 @@ export function ImpersonationBanner() {
   const router  = useRouter();
   const [busy,  setBusy] = useState(false);
 
-  const imp = (session?.user as unknown as { impersonating?: { clientName: string; partnerId: string; expiresAt: number } } | null)?.impersonating;
+  const imp = (session?.user as unknown as { impersonating?: { clientName: string; partnerId: string; initiatedBy?: string; expiresAt?: number } } | null)?.impersonating;
 
   if (!imp) return null;
+
+  const isPartnerImpersonation = imp.initiatedBy === "partner_admin";
+  const exitHref = isPartnerImpersonation ? "/partner/clients" : "/admin/tenants";
 
   async function handleBack() {
     setBusy(true);
     try {
       await update({ action: "deimpersonate" });
-      router.replace("/partner/clients");
+      router.replace(exitHref);
     } catch {
       setBusy(false);
     }
@@ -33,7 +36,7 @@ export function ImpersonationBanner() {
         disabled={busy}
         className="px-3 py-1 rounded-lg bg-white text-indigo-700 font-semibold text-xs hover:bg-indigo-50 transition-colors disabled:opacity-60"
       >
-        {busy ? "กำลังออก…" : "← กลับหน้า Partner"}
+        {busy ? "กำลังออก…" : "← ออกจากโหมดดูแทน"}
       </button>
     </div>
   );

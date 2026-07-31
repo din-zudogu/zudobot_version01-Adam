@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { botStateLabel } from "@/lib/payment/botStateMachine";
 import type { BotState } from "@/types";
 import { DeleteAccountModal, type DeleteTarget } from "@/components/admin/DeleteAccountModal";
@@ -58,6 +61,8 @@ function CopyableId({ value }: { value: string }) {
 }
 
 export default function AdminTenantsPage() {
+  const { update }    = useSession();
+  const router         = useRouter();
   const [tenants,     setTenants]     = useState<Tenant[]>([]);
   const [total,       setTotal]       = useState(0);
   const [page,        setPage]        = useState(1);
@@ -67,6 +72,7 @@ export default function AdminTenantsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [toast,        setToast]        = useState<{ msg: string; ok: boolean } | null>(null);
+  const [viewingId,    setViewingId]    = useState<string | null>(null);
 
   const fetchTenants = useCallback(async () => {
     setLoading(true);
@@ -105,6 +111,23 @@ export default function AdminTenantsPage() {
 
   const totalPages = Math.ceil(total / 20);
 
+  async function handleViewDashboard(t: Tenant) {
+    setViewingId(t.id);
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ tenantId: t.id }),
+      });
+      const data = await res.json();
+      if (!data.ok) { setViewingId(null); showToast("เข้าดู dashboard ไม่สำเร็จ", false); return; }
+      await update({ action: "impersonate", tenantId: data.tenantId, clientName: data.clientName });
+      router.push("/dashboard/overview");
+    } catch {
+      setViewingId(null);
+    }
+  }
+
   return (
     <div>
       {/* Toast */}
@@ -121,6 +144,12 @@ export default function AdminTenantsPage() {
           <h1 className="font-heading text-2xl font-bold text-text-primary">Tenants</h1>
           <p className="text-sm text-text-muted mt-0.5">ผู้ใช้ทั้งหมด {total.toLocaleString()} รายการ</p>
         </div>
+        <Link
+          href="/admin/create-tenant"
+          className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+        >
+          ➕ สร้างบัญชีลูกค้าใหม่
+        </Link>
       </div>
 
       {/* Filters */}
@@ -219,21 +248,32 @@ export default function AdminTenantsPage() {
                       {new Date(t.createdAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {isPendingDelete ? (
-                        <button
-                          onClick={() => handleRestore(t)}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 font-medium transition-colors whitespace-nowrap"
-                        >
-                          กู้คืนบัญชี
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setDeleteTarget({ id: t.id, name: t.name, email: t.email, type: "tenant" })}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium transition-colors"
-                        >
-                          Delete
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {!isPendingDelete && (
+                          <button
+                            onClick={() => handleViewDashboard(t)}
+                            disabled={viewingId === t.id}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {viewingId === t.id ? "…" : "View Dashboard →"}
+                          </button>
+                        )}
+                        {isPendingDelete ? (
+                          <button
+                            onClick={() => handleRestore(t)}
+                            className="text-xs px-3 py-1.5 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 font-medium transition-colors whitespace-nowrap"
+                          >
+                            กู้คืนบัญชี
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteTarget({ id: t.id, name: t.name, email: t.email, type: "tenant" })}
+                            className="text-xs px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium transition-colors"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

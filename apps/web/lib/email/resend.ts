@@ -288,6 +288,82 @@ export async function sendPartnerConsolidatedInvoiceEmail(opts: {
   });
 }
 
+export async function sendAdminCreatedTenantWelcomeEmail(opts: {
+  to:          string;
+  name:        string;
+  businessName: string;
+  loginUrl:    string;
+}) {
+  const { to, name, businessName, loginUrl } = opts;
+  const html = `
+<!DOCTYPE html>
+<html lang="th">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f6fb;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:40px 0">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#1E5BC6;padding:28px 40px;text-align:center">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px">ZUDOBOT</h1>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 40px">
+            <p style="margin:0 0 16px;font-size:16px;color:#1a2332">สวัสดีคุณ <strong>${name}</strong>,</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4a5568;line-height:1.7">
+              ทีมงาน Zudobot ได้เตรียมบัญชีสำหรับ <strong>${businessName}</strong> ให้คุณเรียบร้อยแล้ว
+              คุณสามารถเข้าสู่ระบบได้ทันทีด้วยบัญชี Google อีเมลนี้ — ไม่ต้องสมัครสมาชิกใหม่
+            </p>
+
+            <!-- CTA button -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="${loginUrl}"
+                    style="display:inline-block;background:#1E5BC6;color:#ffffff;font-size:15px;font-weight:600;
+                           text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:0.2px">
+                    เข้าสู่ระบบด้วย Google →
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;text-align:center;line-height:1.6">
+              กรุณาเข้าสู่ระบบด้วยบัญชี Google ที่ใช้อีเมล <strong>${to}</strong> เท่านั้น เพื่อเข้าถึงบัญชีนี้<br>
+              หากลิงก์ด้านบนใช้ไม่ได้ ให้คัดลอก URL นี้ไปวางในเบราว์เซอร์:<br>
+              <span style="color:#1E5BC6;word-break:break-all">${loginUrl}</span>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8faff;border-top:1px solid #e5eaf5;padding:20px 40px;text-align:center">
+            <p style="margin:0;font-size:12px;color:#9ca3af">
+              © 2025 Zudogu Co., Ltd. • ส่งโดยทีมงาน Zudobot
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: `บัญชี Zudobot ของ ${businessName} พร้อมใช้งานแล้ว`,
+    html,
+  });
+}
+
 export async function sendAdminSubscribeForCustomerEmail(opts: {
   to:         string;
   name:       string;

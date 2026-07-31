@@ -14,7 +14,8 @@ interface ImpersonatingData {
   originalRole:     string;
   clientName:       string;
   partnerId:        string;
-  expiresAt:        number; // Unix timestamp
+  initiatedBy:      "partner_admin" | "admin" | "super_admin";
+  expiresAt?:       number; // Unix timestamp — undefined = never auto-expires (admin/super_admin)
 }
 
 interface ZudobotJWT extends JWT {
@@ -205,9 +206,10 @@ export const authConfig: NextAuthConfig = {
           }
         }
       }
-      // Auto-clear expired impersonation (runs on every token read)
+      // Auto-clear expired impersonation (runs on every token read).
+      // expiresAt is undefined for admin/super_admin impersonation — never auto-clears.
       const imp = (token as ZudobotJWT).impersonating;
-      if (imp && imp.expiresAt < Math.floor(Date.now() / 1000)) {
+      if (imp && imp.expiresAt !== undefined && imp.expiresAt < Math.floor(Date.now() / 1000)) {
         const t = token as ZudobotJWT;
         t.tenantId = imp.originalTenantId;
         t.role     = imp.originalRole;
@@ -221,12 +223,16 @@ export const authConfig: NextAuthConfig = {
 
         // Handle impersonation actions (no DB needed)
         if (payload?.action === "impersonate") {
+          const initiatedBy = (t.role === "partner_admin" ? "partner_admin" : t.role) as ImpersonatingData["initiatedBy"];
           t.impersonating = {
             originalTenantId: (t.tenantId ?? t.sub) as string,
             originalRole:     t.role as string,
             clientName:       payload.clientName as string,
             partnerId:        payload.partnerId  as string,
-            expiresAt:        Math.floor(Date.now() / 1000) + 7200,
+            initiatedBy,
+            // Partner impersonation auto-expires after 2h; admin/super_admin
+            // impersonation is permanent (exited explicitly via the banner).
+            expiresAt: initiatedBy === "partner_admin" ? Math.floor(Date.now() / 1000) + 7200 : undefined,
           };
           t.tenantId = payload.tenantId as string;
           return token;

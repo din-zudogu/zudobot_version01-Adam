@@ -227,7 +227,7 @@ export async function middleware(request: NextRequest) {
 
   // ── /dashboard/* — tenant only (partner_admin-only users go to partner) ──
   if (pathname.startsWith("/dashboard")) {
-    if (role === "super_admin" || role === "admin") {
+    if ((role === "super_admin" || role === "admin") && !isImpersonating) {
       return NextResponse.redirect(new URL("/admin/tenants", request.url));
     }
     if (hasPartnerRole && !hasTenantRole && !isImpersonating) {

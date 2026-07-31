@@ -13,6 +13,7 @@ type NavEntry = NavItem | NavGroup;
 
 const NAV: NavEntry[] = [
   { kind: "item", href: "/admin/tenants",          icon: "👥", label: "Tenants" },
+  { kind: "item", href: "/admin/create-tenant",    icon: "➕", label: "สร้างบัญชีลูกค้าใหม่" },
   { kind: "item", href: "/admin/accounts",          icon: "🗂️", label: "Accounts" },
   { kind: "item", href: "/admin/partners",          icon: "🤝", label: "Partners" },
   { kind: "item", href: "/admin/rag-analytics",     icon: "🔍", label: "RAG Analytics" },
